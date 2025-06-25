@@ -1,0 +1,3 @@
+Initializing Wayland interfaces...
+Wayland interfaces initialized successfully.
+Session is locked

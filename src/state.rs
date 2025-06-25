@@ -1,4 +1,4 @@
-use crate::interface::WaylandInterfaces;
+use crate::{interface::WaylandInterfaces, lock::State};
 
 use wayland_client::{
     Connection, Dispatch, EventQueue, QueueHandle,
@@ -11,23 +11,31 @@ use wayland_client::{
     },
 };
 use wayland_protocols::{
-    ext::session_lock::v1::client::ext_session_lock_manager_v1::ExtSessionLockManagerV1,
+    ext::session_lock::v1::client::{
+        ext_session_lock_manager_v1::ExtSessionLockManagerV1,
+        ext_session_lock_surface_v1::ExtSessionLockSurfaceV1,
+    },
     wp::viewporter::client::wp_viewporter::WpViewporter,
 };
 
 pub struct LockState {
     pub interfaces: WaylandInterfaces,
+    pub state: State,
 }
 
 impl LockState {
     pub fn new() -> Self {
         Self {
             interfaces: WaylandInterfaces::new(),
+            state: State::Ready,
         }
     }
 
     pub fn initialize(&mut self) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
-        self.interfaces.create_and_bind()
+        let event_queue = self.interfaces.create_and_bind()?;
+        self.state = State::Initialized;
+
+        Ok(event_queue)
     }
 
     pub fn roundtrip(
@@ -71,7 +79,8 @@ empty_dispatch! {
     WlCompositor,
     WlSeat,
     WpViewporter,
-    ExtSessionLockManagerV1
+    ExtSessionLockManagerV1,
+    ExtSessionLockSurfaceV1
 }
 
 impl Dispatch<WlRegistry, ()> for LockState {

@@ -4,11 +4,15 @@ use wayland_client::{
     Connection, EventQueue,
     protocol::{
         wl_compositor::WlCompositor, wl_display::WlDisplay, wl_output::WlOutput,
-        wl_registry::WlRegistry, wl_seat::WlSeat,
+        wl_registry::WlRegistry, wl_seat::WlSeat, wl_surface::WlSurface,
     },
 };
 use wayland_protocols::{
-    ext::session_lock::v1::client::ext_session_lock_manager_v1::ExtSessionLockManagerV1,
+    ext::session_lock::v1::client::{
+        ext_session_lock_manager_v1::ExtSessionLockManagerV1,
+        ext_session_lock_surface_v1::ExtSessionLockSurfaceV1,
+        ext_session_lock_v1::ExtSessionLockV1,
+    },
     wp::viewporter::client::wp_viewporter::WpViewporter,
 };
 
@@ -22,7 +26,11 @@ pub struct WaylandInterfaces {
     pub seat: Option<WlSeat>,
     pub viewporter: Option<WpViewporter>,
 
+    pub surface: Option<WlSurface>,
+
     pub session_lock_manager: Option<ExtSessionLockManagerV1>,
+    pub session_lock: Option<ExtSessionLockV1>,
+    pub session_lock_surface: Option<ExtSessionLockSurfaceV1>,
 }
 
 impl WaylandInterfaces {
@@ -35,7 +43,10 @@ impl WaylandInterfaces {
             compositor: None,
             seat: None,
             viewporter: None,
+            surface: None,
             session_lock_manager: None,
+            session_lock: None,
+            session_lock_surface: None,
         }
     }
 
