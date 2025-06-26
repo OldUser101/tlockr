@@ -77,7 +77,6 @@ empty_dispatch! {
     WlDisplay,
     WlOutput,
     WlCompositor,
-    WlSeat,
     WpViewporter,
     ExtSessionLockManagerV1,
     ExtSessionLockSurfaceV1

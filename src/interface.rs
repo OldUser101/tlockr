@@ -3,8 +3,8 @@ use crate::state::LockState;
 use wayland_client::{
     Connection, EventQueue,
     protocol::{
-        wl_compositor::WlCompositor, wl_display::WlDisplay, wl_output::WlOutput,
-        wl_registry::WlRegistry, wl_seat::WlSeat, wl_surface::WlSurface,
+        wl_compositor::WlCompositor, wl_display::WlDisplay, wl_keyboard::WlKeyboard,
+        wl_output::WlOutput, wl_registry::WlRegistry, wl_seat::WlSeat, wl_surface::WlSurface,
     },
 };
 use wayland_protocols::{
@@ -31,6 +31,8 @@ pub struct WaylandInterfaces {
     pub session_lock_manager: Option<ExtSessionLockManagerV1>,
     pub session_lock: Option<ExtSessionLockV1>,
     pub session_lock_surface: Option<ExtSessionLockSurfaceV1>,
+
+    pub keyboard: Option<WlKeyboard>,
 }
 
 impl WaylandInterfaces {
@@ -47,6 +49,7 @@ impl WaylandInterfaces {
             session_lock_manager: None,
             session_lock: None,
             session_lock_surface: None,
+            keyboard: None,
         }
     }
 

@@ -1,4 +1,5 @@
 mod interface;
+mod keyboard;
 mod lock;
 mod state;
 
