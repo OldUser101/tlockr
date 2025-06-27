@@ -1,4 +1,4 @@
-use crate::state::LockState;
+use crate::{keyboard::KeyboardMapping, state::LockState};
 
 use wayland_client::{
     Connection, EventQueue,
@@ -33,6 +33,8 @@ pub struct WaylandInterfaces {
     pub session_lock_surface: Option<ExtSessionLockSurfaceV1>,
 
     pub keyboard: Option<WlKeyboard>,
+
+    pub keymap: Option<KeyboardMapping>,
 }
 
 impl WaylandInterfaces {
@@ -50,6 +52,7 @@ impl WaylandInterfaces {
             session_lock: None,
             session_lock_surface: None,
             keyboard: None,
+            keymap: None,
         }
     }
 

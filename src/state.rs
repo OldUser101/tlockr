@@ -8,13 +8,11 @@ use wayland_client::{
         wl_output::WlOutput,
         wl_registry::{Event as RegistryEvent, WlRegistry},
         wl_seat::WlSeat,
+        wl_surface::WlSurface,
     },
 };
 use wayland_protocols::{
-    ext::session_lock::v1::client::{
-        ext_session_lock_manager_v1::ExtSessionLockManagerV1,
-        ext_session_lock_surface_v1::ExtSessionLockSurfaceV1,
-    },
+    ext::session_lock::v1::client::ext_session_lock_manager_v1::ExtSessionLockManagerV1,
     wp::viewporter::client::wp_viewporter::WpViewporter,
 };
 
@@ -79,7 +77,7 @@ empty_dispatch! {
     WlCompositor,
     WpViewporter,
     ExtSessionLockManagerV1,
-    ExtSessionLockSurfaceV1
+    WlSurface
 }
 
 impl Dispatch<WlRegistry, ()> for LockState {

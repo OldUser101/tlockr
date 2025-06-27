@@ -1,6 +1,7 @@
 use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
-use wayland_protocols::ext::session_lock::v1::client::ext_session_lock_v1::{
-    self, ExtSessionLockV1,
+use wayland_protocols::ext::session_lock::v1::client::{
+    ext_session_lock_surface_v1::{self, ExtSessionLockSurfaceV1},
+    ext_session_lock_v1::{self, ExtSessionLockV1},
 };
 
 use crate::state::LockState;
@@ -42,13 +43,47 @@ impl Dispatch<ExtSessionLockV1, ()> for LockState {
     }
 }
 
+impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
+    fn event(
+        state: &mut Self,
+        proxy: &ExtSessionLockSurfaceV1,
+        event: <ExtSessionLockSurfaceV1 as wayland_client::Proxy>::Event,
+        _data: &(),
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+    ) {
+        match event {
+            ext_session_lock_surface_v1::Event::Configure {
+                serial,
+                width: _,
+                height: _,
+            } => {
+                proxy.ack_configure(serial);
+
+                if let Some(surface) = &state.interfaces.surface {
+                    surface.commit();
+
+                    println!("Acknowledged and configured surface.");
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 impl LockState {
     pub fn lock(
         &mut self,
         event_queue: &EventQueue<LockState>,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        let qh = event_queue.handle();
+
+        if let Some(ref compositor) = self.interfaces.compositor {
+            let surface = compositor.create_surface(&qh, ());
+            self.interfaces.surface = Some(surface);
+        }
+
         if let Some(ref session_lock_manager) = self.interfaces.session_lock_manager {
-            let qh = event_queue.handle();
             self.interfaces.session_lock = Some(session_lock_manager.lock(&qh, ()));
         } else {
             return Err("Failed to lock session.".to_string().into());
