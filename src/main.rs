@@ -1,3 +1,4 @@
+mod buffer;
 mod interface;
 mod keyboard;
 mod lock;
@@ -18,6 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Wayland interfaces initialized successfully.");
 
+    lock_state.allocate_buffers(&event_queue, 1920, 1200, 2)?;
     lock_state.lock(&event_queue)?;
 
     while lock_state.state != State::Unlocked {

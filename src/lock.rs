@@ -60,7 +60,18 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
             } => {
                 proxy.ack_configure(serial);
 
-                if let Some(surface) = &state.interfaces.surface {
+                if let (Some(surface), Some(viewport)) =
+                    (&state.interfaces.surface, &state.interfaces.viewport)
+                {
+                    let buffer = &mut state.interfaces.buffers.as_mut().unwrap()[0];
+                    buffer.in_use = true;
+
+                    surface.attach(Some(&buffer.buffer), 0, 0);
+
+                    surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
+
+                    viewport.set_destination(1920, 1200);
+
                     surface.commit();
 
                     println!("Acknowledged and configured surface.");
@@ -78,12 +89,16 @@ impl LockState {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let qh = event_queue.handle();
 
-        if let Some(ref compositor) = self.interfaces.compositor {
+        if let (Some(compositor), Some(viewporter)) =
+            (&self.interfaces.compositor, &self.interfaces.viewporter)
+        {
             let surface = compositor.create_surface(&qh, ());
+            let viewport = viewporter.get_viewport(&surface, &qh, ());
             self.interfaces.surface = Some(surface);
+            self.interfaces.viewport = Some(viewport);
         }
 
-        if let Some(ref session_lock_manager) = self.interfaces.session_lock_manager {
+        if let Some(session_lock_manager) = &self.interfaces.session_lock_manager {
             self.interfaces.session_lock = Some(session_lock_manager.lock(&qh, ()));
         } else {
             return Err("Failed to lock session.".to_string().into());

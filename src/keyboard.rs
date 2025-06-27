@@ -13,11 +13,14 @@ use std::{
 };
 
 use crate::state::LockState;
-use xkbcommon::xkb;
+
+use xkbcommon_rs::{Keymap, State};
 
 pub struct KeyboardMapping {
     _file: std::fs::File,
-    mmap: memmap2::Mmap,
+    _mmap: memmap2::Mmap,
+    keymap: Option<Keymap>,
+    state: Option<State>,
 }
 
 impl Dispatch<WlKeyboard, ()> for LockState {
@@ -36,12 +39,31 @@ impl Dispatch<WlKeyboard, ()> for LockState {
                     let mmap_result = unsafe { MmapOptions::new().len(size as usize).map(&file) };
                     match mmap_result {
                         Ok(mmap) => {
-                            let mapping = KeyboardMapping {
-                                _file: file,
-                                mmap: mmap,
-                            };
-                            lock_state.interfaces.keymap = Some(mapping);
-                            println!("Found xkbV1 format keymap.");
+                            let keymap_str =
+                                std::str::from_utf8(&mmap).expect("Keymap mmap is not valid UTF-8");
+                            let keymap_result = xkbcommon_rs::Keymap::new_from_string(
+                                xkbcommon_rs::Context::new(0).unwrap(),
+                                keymap_str,
+                                xkbcommon_rs::KeymapFormat::TextV1,
+                                0,
+                            );
+
+                            match keymap_result {
+                                Ok(keymap) => {
+                                    let state = State::new(keymap.clone());
+                                    let mapping = KeyboardMapping {
+                                        _file: file,
+                                        _mmap: mmap,
+                                        keymap: Some(keymap),
+                                        state: Some(state),
+                                    };
+                                    lock_state.interfaces.keymap = Some(mapping);
+                                    println!("Found xkbV1 format keymap and created state.");
+                                }
+                                Err(_) => {
+                                    println!("Error compiling keymap.");
+                                }
+                            }
                         }
                         Err(e) => {
                             eprintln!("Failed to mmap keymap file: {}", e);
@@ -55,23 +77,12 @@ impl Dispatch<WlKeyboard, ()> for LockState {
                 key,
                 state: _,
             } => {
-                println!("KEY");
                 if let Some(ref keymap) = lock_state.interfaces.keymap {
-                    let context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
-                    let keymap_str = std::str::from_utf8(&keymap.mmap).unwrap_or("");
-                    let xkb_keymap = xkb::Keymap::new_from_string(
-                        &context,
-                        keymap_str.to_string(),
-                        xkb::KEYMAP_FORMAT_TEXT_V1,
-                        xkb::KEYMAP_COMPILE_NO_FLAGS,
-                    );
-                    if let Some(xkb_keymap) = xkb_keymap {
-                        let state_xkb = xkb::State::new(&xkb_keymap);
-
+                    if let (Some(_keymap_file), Some(state)) = (&keymap.keymap, &keymap.state) {
                         let keycode = key + 8;
-                        let keysym = state_xkb.key_get_one_sym(xkb::Keycode::from(keycode));
-                        let utf8 = xkb::keysym_get_name(keysym);
-                        println!("Key pressed: {}", utf8);
+                        let keysym = state.key_get_one_sym(keycode);
+                        let s = xkbcommon_rs::keysym::keysym_get_name(&keysym.unwrap()).unwrap();
+                        println!("Pressed: {}", s);
                     }
                 }
             }
@@ -83,22 +94,30 @@ impl Dispatch<WlKeyboard, ()> for LockState {
 impl Dispatch<WlSeat, ()> for LockState {
     fn event(
         state: &mut Self,
-        _proxy: &WlSeat,
+        proxy: &WlSeat,
         event: <WlSeat as wayland_client::Proxy>::Event,
         _data: &(),
         _conn: &Connection,
         qh: &QueueHandle<Self>,
     ) {
         match event {
-            wl_seat::Event::Capabilities { capabilities } => {
-                if capabilities == WEnum::Value(Capability::Keyboard)
-                    && state.interfaces.keyboard.is_none()
-                {
-                    let keyboard = state.interfaces.seat.as_ref().unwrap().get_keyboard(qh, ());
-                    state.interfaces.keyboard = Some(keyboard);
-                    println!("Acquired keyboard input interface.");
+            wl_seat::Event::Capabilities { capabilities } => match capabilities {
+                WEnum::Value(bits) => {
+                    if bits.contains(Capability::Keyboard) && state.interfaces.keyboard.is_none() {
+                        let keyboard = proxy.get_keyboard(qh, ());
+                        state.interfaces.keyboard = Some(keyboard);
+                        println!("Acquired keyboard input interface.");
+                    } else if !bits.contains(Capability::Keyboard)
+                        && state.interfaces.keyboard.is_some()
+                    {
+                        if let Some(ref keyboard) = state.interfaces.keyboard {
+                            keyboard.release();
+                            state.interfaces.keyboard = None;
+                        }
+                    }
                 }
-            }
+                _ => {}
+            },
             _ => {}
         }
     }

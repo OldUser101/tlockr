@@ -8,12 +8,14 @@ use wayland_client::{
         wl_output::WlOutput,
         wl_registry::{Event as RegistryEvent, WlRegistry},
         wl_seat::WlSeat,
+        wl_shm::WlShm,
+        wl_shm_pool::WlShmPool,
         wl_surface::WlSurface,
     },
 };
 use wayland_protocols::{
     ext::session_lock::v1::client::ext_session_lock_manager_v1::ExtSessionLockManagerV1,
-    wp::viewporter::client::wp_viewporter::WpViewporter,
+    wp::viewporter::client::{wp_viewport::WpViewport, wp_viewporter::WpViewporter},
 };
 
 pub struct LockState {
@@ -77,7 +79,10 @@ empty_dispatch! {
     WlCompositor,
     WpViewporter,
     ExtSessionLockManagerV1,
-    WlSurface
+    WlSurface,
+    WlShm,
+    WlShmPool,
+    WpViewport
 }
 
 impl Dispatch<WlRegistry, ()> for LockState {
@@ -98,6 +103,10 @@ impl Dispatch<WlRegistry, ()> for LockState {
                 "wl_output" => {
                     let output = registry.bind::<WlOutput, _, _>(name, version, qh, ());
                     state.interfaces.output = Some(output);
+                }
+                "wl_shm" => {
+                    let shm = registry.bind::<WlShm, _, _>(name, version, qh, ());
+                    state.interfaces.shm = Some(shm);
                 }
                 "wl_compositor" => {
                     let compositor = registry.bind::<WlCompositor, _, _>(name, version, qh, ());
