@@ -1,3 +1,4 @@
+mod ffi;
 mod buffer;
 mod interface;
 mod keyboard;
@@ -9,6 +10,12 @@ use state::LockState;
 use crate::lock::State;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    unsafe {
+        println!("{}", ffi::test());
+    }
+    
+    return Ok(());
+    
     println!("Initializing Wayland interfaces...");
 
     let mut lock_state = LockState::new();
