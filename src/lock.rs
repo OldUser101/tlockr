@@ -4,7 +4,10 @@ use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_v1::{self, ExtSessionLockV1},
 };
 
-use crate::state::LockState;
+use std::ffi::CString;
+use std::os::raw::c_void;
+
+use crate::{ffi::render_single_frame, state::LockState};
 
 #[derive(PartialEq)]
 pub enum State {
@@ -65,6 +68,16 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
                 {
                     let buffer = &mut state.interfaces.buffers.as_mut().unwrap()[0];
                     buffer.in_use = true;
+
+                    unsafe {
+                        let qml_path = CString::new(state.qml_path.as_str()).unwrap();
+                        render_single_frame(
+                            qml_path.as_ptr(),
+                            1920,
+                            1200,
+                            buffer.data as *mut c_void,
+                        );
+                    }
 
                     surface.attach(Some(&buffer.buffer), 0, 0);
 

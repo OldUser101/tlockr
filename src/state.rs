@@ -21,13 +21,15 @@ use wayland_protocols::{
 pub struct LockState {
     pub interfaces: WaylandInterfaces,
     pub state: State,
+    pub qml_path: String,
 }
 
 impl LockState {
-    pub fn new() -> Self {
+    pub fn new(qml_path: String) -> Self {
         Self {
             interfaces: WaylandInterfaces::new(),
             state: State::Ready,
+            qml_path: qml_path,
         }
     }
 

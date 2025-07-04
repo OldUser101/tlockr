@@ -1,6 +1,6 @@
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
 
-use nix::libc::ftruncate;
+use nix::libc::{MAP_SHARED, PROT_READ, PROT_WRITE, ftruncate, mmap};
 use nix::sys::memfd::{MFdFlags, memfd_create};
 use wayland_client::protocol::wl_buffer::{self, WlBuffer};
 use wayland_client::protocol::wl_shm;
@@ -11,6 +11,7 @@ use crate::state::LockState;
 pub struct Buffer {
     pub buffer: WlBuffer,
     pub in_use: bool,
+    pub data: *mut u8,
 }
 
 impl Dispatch<WlBuffer, i32> for LockState {
@@ -59,6 +60,21 @@ impl LockState {
         let shm = self.interfaces.shm.as_ref().unwrap();
         let fd = create_memfd(size as usize)?;
 
+        let data_ptr = unsafe {
+            mmap(
+                std::ptr::null_mut(),
+                size as usize,
+                PROT_READ | PROT_WRITE,
+                MAP_SHARED,
+                fd.as_raw_fd(),
+                0,
+            )
+        };
+
+        if data_ptr == nix::libc::MAP_FAILED {
+            return Err(Box::<dyn std::error::Error>::from("mmap failed"));
+        }
+
         let pool = shm.create_pool(fd.as_fd(), size as i32, &qh, ());
 
         for i in 0..n {
@@ -72,9 +88,13 @@ impl LockState {
                 i,
             );
 
+            let buffer_offset = (i * stride * height) as isize;
+            let buffer_data = unsafe { (data_ptr as *mut u8).offset(buffer_offset) };
+
             self.interfaces.buffers.as_mut().unwrap().push(Buffer {
                 buffer: buffer,
                 in_use: false,
+                data: buffer_data,
             });
         }
 

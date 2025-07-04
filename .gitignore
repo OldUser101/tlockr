@@ -1,3 +1,5 @@
 /target
 /.vscode
+/build
 output.txt
+*.code-workspace

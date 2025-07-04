@@ -1,5 +1,5 @@
-mod ffi;
 mod buffer;
+mod ffi;
 mod interface;
 mod keyboard;
 mod lock;
@@ -9,16 +9,19 @@ use state::LockState;
 
 use crate::lock::State;
 
+use std::env;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    unsafe {
-        println!("{}", ffi::test());
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() != 2 {
+        println!("Usage: tlockr <qml path>");
+        return Err("Invalid number of arguments".into());
     }
-    
-    return Ok(());
-    
+
     println!("Initializing Wayland interfaces...");
 
-    let mut lock_state = LockState::new();
+    let mut lock_state = LockState::new(args[1].clone());
 
     let mut event_queue = lock_state.initialize()?;
 

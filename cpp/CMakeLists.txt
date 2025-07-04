@@ -11,7 +11,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 COMPONENTS Core Quick Widgets REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC
-  src/qt_bridge.cpp
+  src/render.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -21,7 +21,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 install(TARGETS ${PROJECT_NAME}
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
