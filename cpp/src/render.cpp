@@ -44,7 +44,14 @@ extern "C"
 			return 1;
 		}
 
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+		unsigned char *outputBuffer = static_cast<unsigned char *>(buffer);
+		int rowSize = width * 4;
+
+		// Read the framebuffer, starting at the bottom
+		for (int y = 0; y < height; y++)
+		{
+			glReadPixels(0, height - 1 - y, width, 1, GL_BGRA, GL_UNSIGNED_BYTE, outputBuffer + y * rowSize);
+		}
 
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
