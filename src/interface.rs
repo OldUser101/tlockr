@@ -40,6 +40,11 @@ pub struct WaylandInterfaces {
     pub shm: Option<WlShm>,
 
     pub viewport: Option<WpViewport>,
+
+    pub width: i32,
+    pub height: i32,
+
+    pub output_configured: bool,
 }
 
 impl WaylandInterfaces {
@@ -61,6 +66,9 @@ impl WaylandInterfaces {
             buffers: Some(Vec::new()),
             shm: None,
             viewport: None,
+            width: -1,
+            height: -1,
+            output_configured: false,
         }
     }
 
@@ -78,5 +86,9 @@ impl WaylandInterfaces {
         self.registry = Some(registry);
 
         Ok(event_queue)
+    }
+
+    pub fn ready(&self) -> bool {
+        return self.output_configured;
     }
 }

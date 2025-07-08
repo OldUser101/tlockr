@@ -44,16 +44,20 @@ impl LockState {
     pub fn allocate_buffers(
         &mut self,
         event_queue: &EventQueue<LockState>,
-        width: i32,
-        height: i32,
         n: i32,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if self.interfaces.shm.is_none() {
             return Err(Box::<dyn std::error::Error>::from("shm is None"));
         }
 
-        let stride = width * 4;
-        let size = height * stride * n;
+        if self.interfaces.width < 0 || self.interfaces.height < 0 {
+            return Err(Box::<dyn std::error::Error>::from(
+                "Invalid width or height",
+            ));
+        }
+
+        let stride = self.interfaces.width * 4;
+        let size = self.interfaces.height * stride * n;
 
         let qh = event_queue.handle();
 
@@ -79,16 +83,16 @@ impl LockState {
 
         for i in 0..n {
             let buffer = pool.create_buffer(
-                (i * stride * height) as i32,
-                width,
-                height,
+                (i * stride * self.interfaces.height) as i32,
+                self.interfaces.width,
+                self.interfaces.height,
                 stride,
                 wl_shm::Format::Argb8888,
                 &qh,
                 i,
             );
 
-            let buffer_offset = (i * stride * height) as isize;
+            let buffer_offset = (i * stride * self.interfaces.height) as isize;
             let buffer_data = unsafe { (data_ptr as *mut u8).offset(buffer_offset) };
 
             self.interfaces.buffers.as_mut().unwrap().push(Buffer {

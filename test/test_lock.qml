@@ -47,7 +47,6 @@ Rectangle {
                         anchors.fill: parent
                         color: "transparent"
                         Text {
-                            text: passwordInput.placeholderText
                             color: "#888888"
                             font.pixelSize: passwordInput.font.pixelSize
                             visible: passwordInput.text.length === 0

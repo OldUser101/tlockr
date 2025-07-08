@@ -11,8 +11,9 @@ use crate::{ffi::render_single_frame, state::LockState};
 
 #[derive(PartialEq)]
 pub enum State {
-    Ready,
+    None,
     Initialized,
+    Ready,
     Locked,
     Unlocked,
 }
@@ -73,8 +74,8 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
                         let qml_path = CString::new(state.qml_path.as_str()).unwrap();
                         render_single_frame(
                             qml_path.as_ptr(),
-                            1920,
-                            1200,
+                            state.interfaces.width,
+                            state.interfaces.height,
                             buffer.data as *mut c_void,
                         );
                     }
@@ -83,7 +84,7 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
 
                     surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
 
-                    viewport.set_destination(1920, 1200);
+                    viewport.set_destination(state.interfaces.width, state.interfaces.height);
 
                     surface.commit();
 

@@ -5,7 +5,7 @@ use wayland_client::{
     protocol::{
         wl_compositor::WlCompositor,
         wl_display::WlDisplay,
-        wl_output::WlOutput,
+        wl_output::{self, WlOutput},
         wl_registry::{Event as RegistryEvent, WlRegistry},
         wl_seat::WlSeat,
         wl_shm::WlShm,
@@ -28,7 +28,7 @@ impl LockState {
     pub fn new(qml_path: String) -> Self {
         Self {
             interfaces: WaylandInterfaces::new(),
-            state: State::Ready,
+            state: State::None,
             qml_path: qml_path,
         }
     }
@@ -52,6 +52,9 @@ impl LockState {
         &mut self,
         event_queue: &mut EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        if self.state == State::Initialized && self.interfaces.ready() {
+            self.state = State::Ready;
+        }
         event_queue.blocking_dispatch(self)?;
         Ok(())
     }
@@ -77,7 +80,6 @@ macro_rules! empty_dispatch {
 empty_dispatch! {
     LockState,
     WlDisplay,
-    WlOutput,
     WlCompositor,
     WpViewporter,
     ExtSessionLockManagerV1,
@@ -85,6 +87,36 @@ empty_dispatch! {
     WlShm,
     WlShmPool,
     WpViewport
+}
+
+impl Dispatch<WlOutput, ()> for LockState {
+    fn event(
+        state: &mut Self,
+        _proxy: &WlOutput,
+        event: <WlOutput as wayland_client::Proxy>::Event,
+        _data: &(),
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+    ) {
+        match event {
+            wl_output::Event::Mode {
+                flags,
+                width,
+                height,
+                refresh: _,
+            } => {
+                if flags.into_result().unwrap() == wl_output::Mode::Current {
+                    println!("Output mode: {} x {} pixels", width, height);
+                    state.interfaces.width = width;
+                    state.interfaces.height = height;
+                }
+            }
+            wl_output::Event::Done => {
+                state.interfaces.output_configured = true;
+            }
+            _ => {}
+        }
+    }
 }
 
 impl Dispatch<WlRegistry, ()> for LockState {
