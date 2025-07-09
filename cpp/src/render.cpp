@@ -56,7 +56,7 @@ extern "C"
 		RsFrameReadyCallback frameReadyCallback = nullptr;
 		void *userData = nullptr;
 
-		std::thread qtThread;
+		std::thread renderThread;
 		std::atomic<bool> threadRunning{false};
 		std::atomic<bool> shouldStop{false};
 		std::mutex initMutex;
@@ -234,7 +234,7 @@ extern "C"
 			return -1;
 		}
 
-		renderer->qtThread = std::thread(qml_renderer_thread, renderer);
+		renderer->renderThread = std::thread(qml_renderer_thread, renderer);
 
 		std::unique_lock<std::mutex> lock(renderer->initMutex);
 		renderer->initCondition.wait(lock, [renderer]
@@ -272,9 +272,9 @@ extern "C"
 		renderer->shouldStop = true;
 		renderer->running = false;
 
-		if (renderer->qtThread.joinable())
+		if (renderer->renderThread.joinable())
 		{
-			renderer->qtThread.join();
+			renderer->renderThread.join();
 		}
 
 		delete renderer;
