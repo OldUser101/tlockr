@@ -15,7 +15,7 @@ unsafe extern "C" {
         qml_path: *const c_char,
     ) -> *mut QmlRenderer;
 
-    pub fn start_renderer_app(renderer: *mut QmlRenderer) -> c_int;
+    pub fn start_renderer(renderer: *mut QmlRenderer) -> c_int;
 
     pub fn set_buffer_callbacks(
         renderer: *mut QmlRenderer,

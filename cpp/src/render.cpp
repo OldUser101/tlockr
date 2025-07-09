@@ -226,7 +226,7 @@ extern "C"
 		renderer->threadRunning = false;
 	}
 
-	int start_renderer_app(QmlRenderer *renderer)
+	int start_renderer(QmlRenderer *renderer)
 	{
 		if (!renderer)
 		{
