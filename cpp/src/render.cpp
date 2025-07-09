@@ -254,7 +254,7 @@ extern "C"
 		return 0;
 	}
 
-	void set_buffer_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, RsFrameReadyCallback frameReady, void *userData)
+	void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, RsFrameReadyCallback frameReady, void *userData)
 	{
 		if (!renderer)
 			return;

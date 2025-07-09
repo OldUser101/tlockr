@@ -15,7 +15,7 @@ extern "C"
 
     QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath);
     int start_renderer(QmlRenderer *renderer);
-    void set_buffer_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, RsFrameReadyCallback frameReady, void *userData);
+    void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, RsFrameReadyCallback frameReady, void *userData);
     void cleanup_renderer(QmlRenderer *renderer);
 
     int render_single_frame(const char *qml_path, int width, int height, void *buffer);

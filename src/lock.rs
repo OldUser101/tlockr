@@ -4,10 +4,7 @@ use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_v1::{self, ExtSessionLockV1},
 };
 
-use std::ffi::CString;
-use std::os::raw::c_void;
-
-use crate::{ffi::render_single_frame, state::LockState};
+use crate::{ffi::start_renderer, state::LockState};
 
 #[derive(PartialEq)]
 pub enum State {
@@ -64,31 +61,8 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
             } => {
                 proxy.ack_configure(serial);
 
-                if let (Some(surface), Some(viewport)) =
-                    (&state.interfaces.surface, &state.interfaces.viewport)
-                {
-                    let buffer = &mut state.interfaces.buffers.as_mut().unwrap()[0];
-                    buffer.in_use = true;
-
-                    unsafe {
-                        let qml_path = CString::new(state.qml_path.as_str()).unwrap();
-                        render_single_frame(
-                            qml_path.as_ptr(),
-                            state.interfaces.width,
-                            state.interfaces.height,
-                            buffer.data as *mut c_void,
-                        );
-                    }
-
-                    surface.attach(Some(&buffer.buffer), 0, 0);
-
-                    surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
-
-                    viewport.set_destination(state.interfaces.width, state.interfaces.height);
-
-                    surface.commit();
-
-                    println!("Acknowledged and configured surface.");
+                unsafe {
+                    start_renderer(state.renderer.renderer);
                 }
             }
             _ => {}

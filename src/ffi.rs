@@ -17,7 +17,7 @@ unsafe extern "C" {
 
     pub fn start_renderer(renderer: *mut QmlRenderer) -> c_int;
 
-    pub fn set_buffer_callbacks(
+    pub fn set_callbacks(
         renderer: *mut QmlRenderer,
         get_buffer: RsGetBufferCallback,
         frame_ready: RsFrameReadyCallback,
