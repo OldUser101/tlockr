@@ -3,6 +3,7 @@ mod ffi;
 mod interface;
 mod keyboard;
 mod lock;
+mod renderer;
 mod state;
 
 use state::LockState;

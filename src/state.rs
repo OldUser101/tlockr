@@ -1,5 +1,7 @@
 use crate::{interface::WaylandInterfaces, lock::State};
 
+use crate::renderer::QmlRendererInterface;
+
 use wayland_client::{
     Connection, Dispatch, EventQueue, QueueHandle,
     protocol::{
@@ -20,6 +22,7 @@ use wayland_protocols::{
 
 pub struct LockState {
     pub interfaces: WaylandInterfaces,
+    pub renderer: QmlRendererInterface,
     pub state: State,
     pub qml_path: String,
 }
@@ -28,6 +31,7 @@ impl LockState {
     pub fn new(qml_path: String) -> Self {
         Self {
             interfaces: WaylandInterfaces::new(),
+            renderer: QmlRendererInterface::new(),
             state: State::None,
             qml_path: qml_path,
         }
