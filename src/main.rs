@@ -1,4 +1,5 @@
 mod buffer;
+mod event;
 mod ffi;
 mod interface;
 mod keyboard;
@@ -7,8 +8,6 @@ mod renderer;
 mod state;
 
 use state::LockState;
-
-use crate::lock::State;
 
 use std::env;
 
@@ -30,15 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Wayland interfaces initialized successfully.");
 
-    while lock_state.state != State::Unlocked {
-        lock_state.dispatch_event(&mut event_queue)?;
-
-        if lock_state.state == State::Ready {
-            lock_state.allocate_buffers(&event_queue, 2)?;
-            lock_state.initialize_renderer()?;
-            lock_state.lock(&event_queue)?;
-        }
-    }
+    lock_state.run_event_loop(&mut event_queue)?;
 
     lock_state.destroy_renderer();
 

@@ -52,14 +52,24 @@ impl LockState {
         Ok(())
     }
 
-    pub fn dispatch_event(
+    pub fn update_states(
         &mut self,
-        event_queue: &mut EventQueue<Self>,
+        event_queue: &EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        if self.state == State::Initialized && self.interfaces.ready() {
-            self.state = State::Ready;
+        match self.state {
+            State::Initialized => {
+                if self.interfaces.ready() {
+                    self.state = State::Ready;
+                }
+            }
+            State::Ready => {
+                self.allocate_buffers(event_queue, 2)?;
+                self.initialize_renderer()?;
+                self.lock(event_queue)?;
+            }
+            _ => {}
         }
-        event_queue.blocking_dispatch(self)?;
+
         Ok(())
     }
 }

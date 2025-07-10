@@ -26,7 +26,7 @@ unsafe extern "C" {
 
     pub fn cleanup_renderer(renderer: *mut QmlRenderer);
 
-    pub fn render_single_frame(
+    pub fn _render_single_frame(
         qml_path: *const c_char,
         width: c_int,
         height: c_int,
