@@ -176,7 +176,7 @@ extern "C"
 				rootItem->setHeight(renderer->fbSize.height());
 
 				renderer->running = true;
-				renderer->renderTimer->start(16);	// 16 ms, 60 Hz
+				renderer->renderTimer->start(32);	// 32 ms, 30 Hz
 			} else if (renderer->component->status() == QQmlComponent::Error) {
 				std::cerr << "QML Component has errors:" << std::endl;
 				const auto errors = renderer->component->errors();

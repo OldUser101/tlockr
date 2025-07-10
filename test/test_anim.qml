@@ -19,12 +19,12 @@ Rectangle {
             loops: Animation.Infinite
             NumberAnimation {
                 to: root.width - movingRect.width
-                duration: 1200
+                duration: 10000
                 easing.type: Easing.InOutQuad
             }
             NumberAnimation {
                 to: 0
-                duration: 1200
+                duration: 10000
                 easing.type: Easing.InOutQuad
             }
         }
