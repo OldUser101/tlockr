@@ -25,11 +25,4 @@ unsafe extern "C" {
     );
 
     pub fn cleanup_renderer(renderer: *mut QmlRenderer);
-
-    pub fn _render_single_frame(
-        qml_path: *const c_char,
-        width: c_int,
-        height: c_int,
-        buffer: *mut c_void,
-    ) -> c_int;
 }

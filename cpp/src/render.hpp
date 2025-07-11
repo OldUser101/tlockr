@@ -18,8 +18,6 @@ extern "C"
     void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, RsFrameReadyCallback frameReady, void *userData);
     void cleanup_renderer(QmlRenderer *renderer);
 
-    int render_single_frame(const char *qml_path, int width, int height, void *buffer);
-
 #ifdef __cplusplus
 }
 #endif
