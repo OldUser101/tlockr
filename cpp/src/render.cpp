@@ -91,10 +91,8 @@ extern "C"
 		renderer->initCondition.notify_one();
 	}
 
-	void qml_renderer_thread(QmlRenderer *renderer)
+	void setup_renderer(QmlRenderer *renderer)
 	{
-		QGuiApplication::setAttribute(Qt::AA_UseOpenGLES, false);
-
 		int argc = 0;
 		char **argv = nullptr;
 		renderer->app = new QGuiApplication(argc, argv);
@@ -154,7 +152,10 @@ extern "C"
 		renderer->engine = new QQmlEngine();
 		renderer->component = new QQmlComponent(renderer->engine);
 		renderer->renderTimer = new QTimer();
+	}
 
+	void setup_renderer_signals(QmlRenderer *renderer)
+	{
 		QObject::connect(renderer->component, &QQmlComponent::statusChanged, [renderer]()
 						 {
 			if (renderer->component->status() == QQmlComponent::Ready) {
@@ -213,7 +214,14 @@ extern "C"
 			renderer->running = false;
 			renderer->renderTimer->stop();
 			renderer->renderControl->disconnect(); });
+	}
 
+	void qml_renderer_thread(QmlRenderer *renderer)
+	{
+		QGuiApplication::setAttribute(Qt::AA_UseOpenGLES, false);
+
+		setup_renderer(renderer);
+		setup_renderer_signals(renderer);
 		set_initialize(renderer);
 
 		renderer->threadRunning = true;
