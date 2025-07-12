@@ -5,6 +5,13 @@ pub struct QmlRenderer {
     _private: [u8; 0],
 }
 
+#[repr(C)]
+pub struct BufferData {
+    pub in_use: c_int,
+    pub index: c_int,
+    pub data: *mut c_void,
+}
+
 pub type RsGetBufferCallback = unsafe extern "C" fn(user_data: *mut c_void) -> *mut c_void;
 pub type RsFrameReadyCallback = unsafe extern "C" fn(user_data: *mut c_void, buffer: *mut c_void);
 

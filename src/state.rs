@@ -2,6 +2,7 @@ use crate::{interface::WaylandInterfaces, lock::State};
 
 use crate::renderer::QmlRendererInterface;
 
+use nix::sys::eventfd::EventFd;
 use wayland_client::{
     Connection, Dispatch, EventQueue, QueueHandle,
     protocol::{
@@ -25,6 +26,7 @@ pub struct LockState {
     pub renderer: QmlRendererInterface,
     pub state: State,
     pub qml_path: String,
+    pub renderer_fd: Option<EventFd>,
 }
 
 impl LockState {
@@ -34,12 +36,16 @@ impl LockState {
             renderer: QmlRendererInterface::new(),
             state: State::None,
             qml_path: qml_path,
+            renderer_fd: None,
         }
     }
 
     pub fn initialize(&mut self) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
         let event_queue = self.interfaces.create_and_bind()?;
         self.state = State::Initialized;
+
+        let renderer_fd = EventFd::new()?;
+        self.renderer_fd = Some(renderer_fd);
 
         Ok(event_queue)
     }

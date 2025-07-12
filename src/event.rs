@@ -1,3 +1,5 @@
+use std::os::fd::{AsRawFd, BorrowedFd};
+
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use wayland_client::EventQueue;
 use wayland_client::backend::ReadEventsGuard;
@@ -6,7 +8,7 @@ use crate::lock::State;
 use crate::state::LockState;
 
 const WAYLAND_EVENT_TAG: u64 = 0;
-const _RENDERER_EVENT_TAG: u64 = 1;
+const RENDERER_EVENT_TAG: u64 = 1;
 
 impl LockState {
     fn dispatch_events(
@@ -27,6 +29,9 @@ impl LockState {
         for i in 0..num_events {
             match events[i].data() {
                 WAYLAND_EVENT_TAG => wayland_event_received = true,
+                RENDERER_EVENT_TAG => {
+                    println!("Got renderer event");
+                }
                 _ => {}
             }
         }
@@ -49,6 +54,12 @@ impl LockState {
         let epoll = Epoll::new(EpollCreateFlags::empty())?;
         let mut events = [EpollEvent::empty(); 10];
 
+        let renderer_fd_raw = self.renderer_fd.as_ref().unwrap().as_raw_fd();
+        let renderer_fd = unsafe { BorrowedFd::borrow_raw(renderer_fd_raw) };
+
+        let renderer_event = EpollEvent::new(EpollFlags::EPOLLIN, RENDERER_EVENT_TAG);
+        epoll.add(renderer_fd, renderer_event)?;
+
         while self.state != State::Unlocked {
             self.update_states(&event_queue)?;
 
@@ -59,6 +70,8 @@ impl LockState {
                 self.dispatch_events(&epoll, &mut events, read_guard, event_queue)?;
             }
         }
+
+        epoll.delete(renderer_fd)?;
 
         Ok(())
     }
