@@ -1,37 +1,15 @@
-use std::os::fd::{AsFd, AsRawFd, OwnedFd};
-
+use crate::wayland::state::LockState;
 use nix::libc::{MAP_SHARED, PROT_READ, PROT_WRITE, ftruncate, mmap};
 use nix::sys::memfd::{MFdFlags, memfd_create};
-use wayland_client::protocol::wl_buffer::{self, WlBuffer};
+use std::os::fd::{AsFd, AsRawFd, OwnedFd};
+use wayland_client::EventQueue;
+use wayland_client::protocol::wl_buffer::WlBuffer;
 use wayland_client::protocol::wl_shm;
-use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
-
-use crate::wayland::state::LockState;
 
 pub struct Buffer {
     pub buffer: WlBuffer,
     pub in_use: bool,
     pub data: *mut u8,
-}
-
-impl Dispatch<WlBuffer, i32> for LockState {
-    fn event(
-        state: &mut Self,
-        _proxy: &WlBuffer,
-        event: <WlBuffer as wayland_client::Proxy>::Event,
-        data: &i32,
-        _conn: &Connection,
-        _qh: &QueueHandle<Self>,
-    ) {
-        match event {
-            wl_buffer::Event::Release => {
-                if let Some(buffers) = state.interfaces.buffers.as_mut() {
-                    buffers[*data as usize].in_use = false;
-                }
-            }
-            _ => {}
-        }
-    }
 }
 
 fn create_memfd(size: usize) -> Result<OwnedFd, Box<dyn std::error::Error>> {

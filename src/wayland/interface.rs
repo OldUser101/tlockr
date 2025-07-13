@@ -1,5 +1,4 @@
 use crate::wayland::{buffer::Buffer, keyboard::KeyboardMapping, state::LockState};
-
 use wayland_client::{
     Connection, EventQueue,
     protocol::{

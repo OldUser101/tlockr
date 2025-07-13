@@ -2,7 +2,6 @@ use crate::wayland::{
     ffi::{QmlRenderer, cleanup_renderer, initialize_renderer, set_callbacks},
     state::LockState,
 };
-
 use std::ffi::{CString, c_void};
 
 pub struct QmlRendererInterface {
