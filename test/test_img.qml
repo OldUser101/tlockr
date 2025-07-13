@@ -9,7 +9,7 @@ Rectangle {
     Image {
         id: sourceImage
         anchors.fill: parent
-        source: "file://"                   // If you want to use this test, fill the absolute path to `test_img.jpg` in this directory
+        source: Qt.resolvedUrl("test_img.jpg")
         fillMode: Image.PreserveAspectCrop
         smooth: true
         visible: false

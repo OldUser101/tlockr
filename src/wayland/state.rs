@@ -121,10 +121,6 @@ impl WaylandState {
 
         set_state(self.app_state, State::Initialized);
 
-        unsafe {
-            (*self.app_state).state = State::Initialized;
-        };
-
         let renderer_fd = EventFd::new()?;
         set_renderer_fd(self.app_state, renderer_fd.as_raw_fd());
         self.renderer_event_fd = Some(renderer_fd);

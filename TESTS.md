@@ -11,4 +11,3 @@ The `test` directory contains some helpful tests for the renderer.
 - `test_img.qml`
     - Shows a full screen image with blur.
     - Good for testing graphical effects.
-    - **NOTE**: Requires full path to the image to be set in the QML file before running.

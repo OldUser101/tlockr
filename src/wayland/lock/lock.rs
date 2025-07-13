@@ -87,7 +87,12 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for WaylandState {
                 proxy.ack_configure(serial);
 
                 unsafe {
-                    start_renderer(get_renderer(state.app_state).unwrap());
+                    if let Some(renderer) = get_renderer(state.app_state) {
+                        start_renderer(renderer);
+                    } else {
+                        println!("Renderer was None\n");
+                        return;
+                    }
                 }
             }
             _ => {}
