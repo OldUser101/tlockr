@@ -1,15 +1,6 @@
 use crate::wayland::interface::WaylandState;
 use wayland_client::EventQueue;
 
-#[derive(PartialEq)]
-pub enum State {
-    None,
-    Initialized,
-    Ready,
-    Locked,
-    Unlocked,
-}
-
 impl WaylandState {
     pub fn lock(
         &mut self,

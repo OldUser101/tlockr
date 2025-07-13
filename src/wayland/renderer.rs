@@ -1,49 +1,29 @@
-use crate::wayland::{
-    ffi::{QmlRenderer, cleanup_renderer, initialize_renderer, set_callbacks},
-    interface::WaylandState,
+use crate::{
+    shared::interface::{get_qml_path, get_renderer, set_renderer},
+    wayland::{
+        ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
+        interface::WaylandState,
+    },
 };
-use std::ffi::{CString, c_void};
-
-pub struct QmlRendererInterface {
-    pub renderer: *mut QmlRenderer,
-    pub qml_path: Option<CString>,
-}
-
-impl QmlRendererInterface {
-    pub fn new() -> Self {
-        Self {
-            renderer: std::ptr::null_mut(),
-            qml_path: None,
-        }
-    }
-}
+use std::ffi::c_void;
 
 impl WaylandState {
     unsafe extern "C" fn get_buffer_callback(user_data: *mut c_void) -> *mut c_void {
-        let lock_state = unsafe { &mut *(user_data as *mut LockState) };
+        let state = unsafe { &mut *(user_data as *mut WaylandState) };
 
-        lock_state
-            .interfaces
-            .buffers
-            .as_ref()
-            .expect("buffers is None")[0]
-            .data as *mut c_void
+        state.buffers.as_ref().expect("buffers is None")[0].data as *mut c_void
     }
 
     unsafe extern "C" fn frame_ready_callback(user_data: *mut c_void, buffer: *mut c_void) {
-        let lock_state = unsafe { &mut *(user_data as *mut LockState) };
+        let state = unsafe { &mut *(user_data as *mut WaylandState) };
 
-        if let (Some(surface), Some(viewport)) = (
-            &lock_state.interfaces.surface,
-            &lock_state.interfaces.viewport,
-        ) {
-            if let Some(buffers) = &lock_state.interfaces.buffers {
+        if let (Some(surface), Some(viewport)) = (&state.surface, &state.viewport) {
+            if let Some(buffers) = &state.buffers {
                 if let Some(found_buffer) = buffers.iter().find(|b| b.data as *mut c_void == buffer)
                 {
                     surface.attach(Some(&found_buffer.buffer), 0, 0);
                     surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
-                    viewport
-                        .set_destination(lock_state.interfaces.width, lock_state.interfaces.height);
+                    viewport.set_destination(state.width, state.height);
                     surface.commit();
                 } else {
                     println!("No matching buffer found.");
@@ -53,13 +33,16 @@ impl WaylandState {
     }
 
     pub fn initialize_renderer(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let qml_path = CString::new(self.qml_path.as_str()).unwrap();
-
-        let renderer = unsafe { initialize_renderer(self.width, self.height, qml_path.as_ptr()) };
+        let renderer = unsafe {
+            initialize_renderer(
+                self.width,
+                self.height,
+                get_qml_path(self.app_state).unwrap(),
+            )
+        };
 
         if renderer != std::ptr::null_mut() {
-            self.renderer.renderer = renderer;
-            self.renderer.qml_path = Some(qml_path);
+            set_renderer(self.app_state, renderer);
 
             unsafe {
                 set_callbacks(
@@ -77,11 +60,10 @@ impl WaylandState {
     }
 
     pub fn destroy_renderer(&mut self) {
-        if self.renderer.renderer != std::ptr::null_mut() {
+        if let Some(renderer) = get_renderer(self.app_state) {
             unsafe {
-                cleanup_renderer(self.renderer.renderer);
-                self.renderer.renderer = std::ptr::null_mut();
-                self.renderer.qml_path = None;
+                cleanup_renderer(renderer);
+                set_renderer(self.app_state, std::ptr::null_mut());
             }
         }
     }

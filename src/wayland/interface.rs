@@ -1,4 +1,8 @@
-use crate::wayland::{buffer::Buffer, keyboard::KeyboardMapping};
+use crate::{
+    shared::state::ApplicationState,
+    wayland::{buffer::Buffer, keyboard::KeyboardMapping},
+};
+use nix::sys::eventfd::EventFd;
 use wayland_client::{
     Connection, EventQueue,
     protocol::{
@@ -44,10 +48,15 @@ pub struct WaylandState {
     pub height: i32,
 
     pub output_configured: bool,
+
+    pub app_state: *mut ApplicationState,
+
+    pub renderer_event_fd: Option<EventFd>,
+    pub wayland_event_fd: Option<EventFd>,
 }
 
 impl WaylandState {
-    pub fn new() -> Self {
+    pub fn new(app_state: *mut ApplicationState) -> Self {
         Self {
             connection: None,
             display: None,
@@ -68,6 +77,9 @@ impl WaylandState {
             width: -1,
             height: -1,
             output_configured: false,
+            app_state: app_state,
+            renderer_event_fd: None,
+            wayland_event_fd: None,
         }
     }
 

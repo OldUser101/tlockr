@@ -1,8 +1,9 @@
+pub mod shared;
 pub mod wayland;
 
-use wayland::state::LockState;
+use std::{env, ffi::CString};
 
-use std::env;
+use crate::{shared::state::ApplicationState, wayland::interface::WaylandState};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -12,19 +13,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("Invalid number of arguments".into());
     }
 
+    let qml_path_cstring = CString::new(args[1].clone())?;
+    let qml_path_raw = qml_path_cstring.into_raw();
+
     println!("Initializing Wayland interfaces...");
 
-    let mut lock_state = LockState::new(args[1].clone());
+    let mut app_state = ApplicationState::new(qml_path_raw);
+    let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
 
-    let mut event_queue = lock_state.initialize()?;
+    let mut event_queue = state.initialize()?;
 
-    lock_state.roundtrip(&mut event_queue)?;
+    state.roundtrip(&mut event_queue)?;
 
     println!("Wayland interfaces initialized successfully.");
 
-    lock_state.run_event_loop(&mut event_queue)?;
+    state.run_event_loop(&mut event_queue)?;
 
-    lock_state.destroy_renderer();
+    state.destroy_renderer();
 
     Ok(())
 }

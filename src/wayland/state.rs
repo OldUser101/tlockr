@@ -1,33 +1,23 @@
-use crate::wayland::renderer::QmlRendererInterface;
-use crate::wayland::{interface::WaylandState, lock::State};
+use crate::shared::interface::{get_state, set_renderer_fd};
+use crate::shared::{interface::set_state, state::State};
+use crate::wayland::interface::WaylandState;
 use nix::sys::eventfd::EventFd;
+use std::os::fd::AsRawFd;
 use wayland_client::EventQueue;
 
-pub struct LockState {
-    pub interfaces: WaylandState,
-    pub renderer: QmlRendererInterface,
-    pub state: State,
-    pub qml_path: String,
-    pub renderer_fd: Option<EventFd>,
-}
-
-impl LockState {
-    pub fn new(qml_path: String) -> Self {
-        Self {
-            interfaces: WaylandState::new(),
-            renderer: QmlRendererInterface::new(),
-            state: State::None,
-            qml_path: qml_path,
-            renderer_fd: None,
-        }
-    }
-
+impl WaylandState {
     pub fn initialize(&mut self) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
-        let event_queue = self.interfaces.create_and_bind()?;
-        self.state = State::Initialized;
+        let event_queue = self.create_and_bind()?;
+
+        set_state(self.app_state, State::Initialized);
+
+        unsafe {
+            (*self.app_state).state = State::Initialized;
+        };
 
         let renderer_fd = EventFd::new()?;
-        self.renderer_fd = Some(renderer_fd);
+        set_renderer_fd(self.app_state, renderer_fd.as_raw_fd());
+        self.renderer_event_fd = Some(renderer_fd);
 
         Ok(event_queue)
     }
@@ -44,10 +34,10 @@ impl LockState {
         &mut self,
         event_queue: &EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        match self.state {
+        match get_state(self.app_state).unwrap() {
             State::Initialized => {
-                if self.interfaces.ready() {
-                    self.state = State::Ready;
+                if self.ready() {
+                    set_state(self.app_state, State::Ready);
                 }
             }
             State::Ready => {
