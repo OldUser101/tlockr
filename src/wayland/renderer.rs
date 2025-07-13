@@ -1,6 +1,6 @@
 use crate::wayland::{
     ffi::{QmlRenderer, cleanup_renderer, initialize_renderer, set_callbacks},
-    state::LockState,
+    interface::WaylandState,
 };
 use std::ffi::{CString, c_void};
 
@@ -18,7 +18,7 @@ impl QmlRendererInterface {
     }
 }
 
-impl LockState {
+impl WaylandState {
     unsafe extern "C" fn get_buffer_callback(user_data: *mut c_void) -> *mut c_void {
         let lock_state = unsafe { &mut *(user_data as *mut LockState) };
 
@@ -55,13 +55,7 @@ impl LockState {
     pub fn initialize_renderer(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let qml_path = CString::new(self.qml_path.as_str()).unwrap();
 
-        let renderer = unsafe {
-            initialize_renderer(
-                self.interfaces.width,
-                self.interfaces.height,
-                qml_path.as_ptr(),
-            )
-        };
+        let renderer = unsafe { initialize_renderer(self.width, self.height, qml_path.as_ptr()) };
 
         if renderer != std::ptr::null_mut() {
             self.renderer.renderer = renderer;

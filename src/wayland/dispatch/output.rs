@@ -2,13 +2,13 @@
     WlOutput related dispatch handlers
 */
 
-use crate::wayland::state::LockState;
+use crate::wayland::interface::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::wl_output::{self, WlOutput},
 };
 
-impl Dispatch<WlOutput, ()> for LockState {
+impl Dispatch<WlOutput, ()> for WaylandState {
     fn event(
         state: &mut Self,
         _proxy: &WlOutput,
@@ -26,12 +26,12 @@ impl Dispatch<WlOutput, ()> for LockState {
             } => {
                 if flags.into_result().unwrap() == wl_output::Mode::Current {
                     println!("Output mode: {} x {} pixels", width, height);
-                    state.interfaces.width = width;
-                    state.interfaces.height = height;
+                    state.width = width;
+                    state.height = height;
                 }
             }
             wl_output::Event::Done => {
-                state.interfaces.output_configured = true;
+                state.output_configured = true;
             }
             _ => {}
         }

@@ -1,4 +1,4 @@
-use crate::wayland::{buffer::Buffer, keyboard::KeyboardMapping, state::LockState};
+use crate::wayland::{buffer::Buffer, keyboard::KeyboardMapping};
 use wayland_client::{
     Connection, EventQueue,
     protocol::{
@@ -16,7 +16,7 @@ use wayland_protocols::{
     wp::viewporter::client::{wp_viewport::WpViewport, wp_viewporter::WpViewporter},
 };
 
-pub struct WaylandInterfaces {
+pub struct WaylandState {
     pub connection: Option<Connection>,
     pub display: Option<WlDisplay>,
     pub registry: Option<WlRegistry>,
@@ -46,7 +46,7 @@ pub struct WaylandInterfaces {
     pub output_configured: bool,
 }
 
-impl WaylandInterfaces {
+impl WaylandState {
     pub fn new() -> Self {
         Self {
             connection: None,
@@ -71,7 +71,9 @@ impl WaylandInterfaces {
         }
     }
 
-    pub fn create_and_bind(&mut self) -> Result<EventQueue<LockState>, Box<dyn std::error::Error>> {
+    pub fn create_and_bind(
+        &mut self,
+    ) -> Result<EventQueue<WaylandState>, Box<dyn std::error::Error>> {
         let conn = Connection::connect_to_env()?;
         let display = conn.display();
 

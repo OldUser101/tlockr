@@ -2,7 +2,7 @@
     Empty dispatch handlers for various Wayland objects
 */
 
-use crate::wayland::state::LockState;
+use crate::wayland::interface::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::{
@@ -33,7 +33,7 @@ macro_rules! empty_dispatch {
 }
 
 empty_dispatch! {
-    LockState,
+    WaylandState,
     WlDisplay,
     WlCompositor,
     WpViewporter,

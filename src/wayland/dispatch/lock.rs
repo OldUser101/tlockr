@@ -2,15 +2,16 @@
     Session lock related dispatch handlers
 */
 
+use crate::wayland::ffi::start_renderer;
+use crate::wayland::interface::WaylandState;
 use crate::wayland::lock::State;
-use crate::wayland::{ffi::start_renderer, state::LockState};
 use wayland_client::{Connection, Dispatch, QueueHandle};
 use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_surface_v1::{self, ExtSessionLockSurfaceV1},
     ext_session_lock_v1::{self, ExtSessionLockV1},
 };
 
-impl Dispatch<ExtSessionLockV1, ()> for LockState {
+impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
     fn event(
         state: &mut Self,
         proxy: &ExtSessionLockV1,
@@ -23,10 +24,10 @@ impl Dispatch<ExtSessionLockV1, ()> for LockState {
             ext_session_lock_v1::Event::Locked => {
                 println!("Session is locked");
                 state.state = State::Locked;
-                if let Some(surface) = &state.interfaces.surface {
-                    if let Some(output) = &state.interfaces.output {
+                if let Some(surface) = &state.surface {
+                    if let Some(output) = &state.output {
                         let lock_surface = proxy.get_lock_surface(surface, output, &qh, ());
-                        state.interfaces.session_lock_surface = Some(lock_surface);
+                        state.session_lock_surface = Some(lock_surface);
                     }
                 }
             }
@@ -39,7 +40,7 @@ impl Dispatch<ExtSessionLockV1, ()> for LockState {
     }
 }
 
-impl Dispatch<ExtSessionLockSurfaceV1, ()> for LockState {
+impl Dispatch<ExtSessionLockSurfaceV1, ()> for WaylandState {
     fn event(
         state: &mut Self,
         proxy: &ExtSessionLockSurfaceV1,

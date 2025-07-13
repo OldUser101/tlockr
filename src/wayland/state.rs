@@ -1,10 +1,10 @@
 use crate::wayland::renderer::QmlRendererInterface;
-use crate::wayland::{interface::WaylandInterfaces, lock::State};
+use crate::wayland::{interface::WaylandState, lock::State};
 use nix::sys::eventfd::EventFd;
 use wayland_client::EventQueue;
 
 pub struct LockState {
-    pub interfaces: WaylandInterfaces,
+    pub interfaces: WaylandState,
     pub renderer: QmlRendererInterface,
     pub state: State,
     pub qml_path: String,
@@ -14,7 +14,7 @@ pub struct LockState {
 impl LockState {
     pub fn new(qml_path: String) -> Self {
         Self {
-            interfaces: WaylandInterfaces::new(),
+            interfaces: WaylandState::new(),
             renderer: QmlRendererInterface::new(),
             state: State::None,
             qml_path: qml_path,

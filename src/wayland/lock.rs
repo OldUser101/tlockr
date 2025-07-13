@@ -1,4 +1,4 @@
-use crate::wayland::state::LockState;
+use crate::wayland::interface::WaylandState;
 use wayland_client::EventQueue;
 
 #[derive(PartialEq)]
@@ -10,24 +10,22 @@ pub enum State {
     Unlocked,
 }
 
-impl LockState {
+impl WaylandState {
     pub fn lock(
         &mut self,
-        event_queue: &EventQueue<LockState>,
+        event_queue: &EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let qh = event_queue.handle();
 
-        if let (Some(compositor), Some(viewporter)) =
-            (&self.interfaces.compositor, &self.interfaces.viewporter)
-        {
+        if let (Some(compositor), Some(viewporter)) = (&self.compositor, &self.viewporter) {
             let surface = compositor.create_surface(&qh, ());
             let viewport = viewporter.get_viewport(&surface, &qh, ());
-            self.interfaces.surface = Some(surface);
-            self.interfaces.viewport = Some(viewport);
+            self.surface = Some(surface);
+            self.viewport = Some(viewport);
         }
 
-        if let Some(session_lock_manager) = &self.interfaces.session_lock_manager {
-            self.interfaces.session_lock = Some(session_lock_manager.lock(&qh, ()));
+        if let Some(session_lock_manager) = &self.session_lock_manager {
+            self.session_lock = Some(session_lock_manager.lock(&qh, ()));
         } else {
             return Err("Failed to lock session.".to_string().into());
         }

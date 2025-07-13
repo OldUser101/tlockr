@@ -7,9 +7,9 @@ use wayland_client::{
     protocol::wl_buffer::{self, WlBuffer},
 };
 
-use crate::wayland::state::LockState;
+use crate::wayland::interface::WaylandState;
 
-impl Dispatch<WlBuffer, i32> for LockState {
+impl Dispatch<WlBuffer, i32> for WaylandState {
     fn event(
         state: &mut Self,
         _proxy: &WlBuffer,
@@ -20,7 +20,7 @@ impl Dispatch<WlBuffer, i32> for LockState {
     ) {
         match event {
             wl_buffer::Event::Release => {
-                if let Some(buffers) = state.interfaces.buffers.as_mut() {
+                if let Some(buffers) = state.buffers.as_mut() {
                     buffers[*data as usize].in_use = false;
                 }
             }

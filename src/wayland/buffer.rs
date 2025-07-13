@@ -1,4 +1,4 @@
-use crate::wayland::state::LockState;
+use crate::wayland::interface::WaylandState;
 use nix::libc::{MAP_SHARED, PROT_READ, PROT_WRITE, ftruncate, mmap};
 use nix::sys::memfd::{MFdFlags, memfd_create};
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
@@ -18,28 +18,28 @@ fn create_memfd(size: usize) -> Result<OwnedFd, Box<dyn std::error::Error>> {
     Ok(fd)
 }
 
-impl LockState {
+impl WaylandState {
     pub fn allocate_buffers(
         &mut self,
-        event_queue: &EventQueue<LockState>,
+        event_queue: &EventQueue<Self>,
         n: i32,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        if self.interfaces.shm.is_none() {
+        if self.shm.is_none() {
             return Err(Box::<dyn std::error::Error>::from("shm is None"));
         }
 
-        if self.interfaces.width < 0 || self.interfaces.height < 0 {
+        if self.width < 0 || self.height < 0 {
             return Err(Box::<dyn std::error::Error>::from(
                 "Invalid width or height",
             ));
         }
 
-        let stride = self.interfaces.width * 4;
-        let size = self.interfaces.height * stride * n;
+        let stride = self.width * 4;
+        let size = self.height * stride * n;
 
         let qh = event_queue.handle();
 
-        let shm = self.interfaces.shm.as_ref().unwrap();
+        let shm = self.shm.as_ref().unwrap();
         let fd = create_memfd(size as usize)?;
 
         let data_ptr = unsafe {
@@ -61,19 +61,19 @@ impl LockState {
 
         for i in 0..n {
             let buffer = pool.create_buffer(
-                (i * stride * self.interfaces.height) as i32,
-                self.interfaces.width,
-                self.interfaces.height,
+                (i * stride * self.height) as i32,
+                self.width,
+                self.height,
                 stride,
                 wl_shm::Format::Argb8888,
                 &qh,
                 i,
             );
 
-            let buffer_offset = (i * stride * self.interfaces.height) as isize;
+            let buffer_offset = (i * stride * self.height) as isize;
             let buffer_data = unsafe { (data_ptr as *mut u8).offset(buffer_offset) };
 
-            self.interfaces.buffers.as_mut().unwrap().push(Buffer {
+            self.buffers.as_mut().unwrap().push(Buffer {
                 buffer: buffer,
                 in_use: false,
                 data: buffer_data,

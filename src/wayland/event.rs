@@ -1,5 +1,5 @@
+use crate::wayland::interface::WaylandState;
 use crate::wayland::lock::State;
-use crate::wayland::state::LockState;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use std::os::fd::{AsRawFd, BorrowedFd};
 use wayland_client::EventQueue;
@@ -8,7 +8,7 @@ use wayland_client::backend::ReadEventsGuard;
 const WAYLAND_EVENT_TAG: u64 = 0;
 const RENDERER_EVENT_TAG: u64 = 1;
 
-impl LockState {
+impl WaylandState {
     fn dispatch_events(
         &mut self,
         epoll: &Epoll,
