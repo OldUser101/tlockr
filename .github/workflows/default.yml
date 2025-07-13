@@ -3,9 +3,25 @@ name: CI
 on:
     push:
         branches: ["main"]
+        paths:
+            - "build.rs"
+            - "Cargo.toml"
+            - "Cargo.lock"
+            - "CMakeLists.txt"
+            - "cpp/**"
+            - "src/**"
+            - "test/**"
     pull_request:
         branches: ["main"]
         types: [opened, synchronize, reopened, ready_for_review]
+        paths:
+            - "build.rs"
+            - "Cargo.toml"
+            - "Cargo.lock"
+            - "CMakeLists.txt"
+            - "cpp/**"
+            - "src/**"
+            - "test/**"
     merge_group:
         types: [checks_requested]
 
