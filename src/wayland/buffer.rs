@@ -6,7 +6,7 @@ use wayland_client::protocol::wl_buffer::{self, WlBuffer};
 use wayland_client::protocol::wl_shm;
 use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
 
-use crate::state::LockState;
+use crate::wayland::state::LockState;
 
 pub struct Buffer {
     pub buffer: WlBuffer,

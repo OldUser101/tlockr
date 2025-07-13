@@ -1,13 +1,6 @@
-mod buffer;
-mod event;
-mod ffi;
-mod interface;
-mod keyboard;
-mod lock;
-mod renderer;
-mod state;
+pub mod wayland;
 
-use state::LockState;
+use wayland::state::LockState;
 
 use std::env;
 

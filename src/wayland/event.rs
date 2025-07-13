@@ -4,8 +4,8 @@ use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTime
 use wayland_client::EventQueue;
 use wayland_client::backend::ReadEventsGuard;
 
-use crate::lock::State;
-use crate::state::LockState;
+use crate::wayland::lock::State;
+use crate::wayland::state::LockState;
 
 const WAYLAND_EVENT_TAG: u64 = 0;
 const RENDERER_EVENT_TAG: u64 = 1;

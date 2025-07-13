@@ -1,6 +1,6 @@
-use crate::{interface::WaylandInterfaces, lock::State};
+use crate::wayland::{interface::WaylandInterfaces, lock::State};
 
-use crate::renderer::QmlRendererInterface;
+use crate::wayland::renderer::QmlRendererInterface;
 
 use nix::sys::eventfd::EventFd;
 use wayland_client::{

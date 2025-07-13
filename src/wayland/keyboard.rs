@@ -12,7 +12,7 @@ use std::{
     os::fd::{FromRawFd, IntoRawFd},
 };
 
-use crate::state::LockState;
+use crate::wayland::state::LockState;
 
 use xkbcommon_rs::{Keymap, State};
 

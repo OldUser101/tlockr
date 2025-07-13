@@ -1,4 +1,4 @@
-use crate::{
+use crate::wayland::{
     ffi::{QmlRenderer, cleanup_renderer, initialize_renderer, set_callbacks},
     state::LockState,
 };

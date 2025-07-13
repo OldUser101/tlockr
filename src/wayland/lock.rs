@@ -4,7 +4,7 @@ use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_v1::{self, ExtSessionLockV1},
 };
 
-use crate::{ffi::start_renderer, state::LockState};
+use crate::wayland::{ffi::start_renderer, state::LockState};
 
 #[derive(PartialEq)]
 pub enum State {
