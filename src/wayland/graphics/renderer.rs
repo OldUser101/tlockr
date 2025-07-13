@@ -18,9 +18,16 @@ use std::ffi::c_void;
 
 impl WaylandState {
     unsafe extern "C" fn get_buffer_callback(user_data: *mut c_void) -> *mut c_void {
-        let state = unsafe { &mut *(user_data as *mut WaylandState) };
+        let state = unsafe { &*(user_data as *const WaylandState) };
 
-        state.buffers.as_ref().expect("buffers is None")[0].data as *mut c_void
+        if let Some(buffers) = &state.buffers {
+            if !buffers.is_empty() {
+                if let Some(buffer) = buffers.iter().find(|b| !b.in_use) {
+                    return buffer.data as *mut c_void;
+                }
+            }
+        }
+        std::ptr::null_mut()
     }
 
     pub unsafe fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -34,14 +41,15 @@ impl WaylandState {
             let event = unsafe { ptr.read() };
 
             if let (Some(surface), Some(viewport)) = (&self.surface, &self.viewport) {
-                if let Some(buffers) = &self.buffers {
+                if let Some(buffers) = &mut self.buffers {
                     if let Some(found_buffer) = buffers
-                        .iter()
+                        .iter_mut()
                         .find(|b| b.data as *mut c_void == event.buffer)
                     {
                         surface.attach(Some(&found_buffer.buffer), 0, 0);
                         surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
                         viewport.set_destination(self.width, self.height);
+                        found_buffer.in_use = true;
                         surface.commit();
                     } else {
                         println!("No matching buffer found.");
@@ -88,7 +96,7 @@ impl WaylandState {
                 set_callbacks(
                     renderer,
                     Self::get_buffer_callback,
-                    self as *mut _ as *mut c_void,
+                    self as *mut WaylandState as *mut c_void,
                 );
             }
         } else {

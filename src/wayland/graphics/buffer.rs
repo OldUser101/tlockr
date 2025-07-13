@@ -85,7 +85,7 @@ impl WaylandState {
             let buffer_data = unsafe { (data_ptr as *mut u8).offset(buffer_offset) };
 
             self.buffers.as_mut().unwrap().push(Buffer {
-                buffer: buffer,
+                buffer,
                 in_use: false,
                 data: buffer_data,
             });

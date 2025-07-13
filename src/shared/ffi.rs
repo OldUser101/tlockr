@@ -16,13 +16,6 @@ pub struct QmlRenderer {
 }
 
 #[repr(C)]
-pub struct BufferData {
-    pub in_use: c_int,
-    pub index: c_int,
-    pub data: *mut c_void,
-}
-
-#[repr(C)]
 pub struct RendererEvent {
     pub buffer: *mut c_void,
 }
