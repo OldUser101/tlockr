@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    event.rs:
+        Contains event loops that handle both Wayland events from an EventQueue
+        and from an EventFd, used for signals from the renderer, via epoll.
+*/
+
 use crate::shared::{
     interface::{get_renderer_fd, get_state},
     state::State,

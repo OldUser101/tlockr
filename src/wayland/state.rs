@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    state.rs:
+        Defines the WaylandState object, which holds the state of the Wayland
+        backend, and links with the rest of the application.
+*/
+
 use crate::shared::interface::{get_state, set_renderer_fd};
 use crate::shared::{interface::set_state, state::State};
 use crate::{

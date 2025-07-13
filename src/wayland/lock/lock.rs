@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    lock.rs:
+        Manages the state of the screen lock, and associated surfaces.
+*/
+
 use crate::shared::interface::get_renderer;
 use crate::shared::state::State;
 use crate::shared::{ffi::start_renderer, interface::set_state};

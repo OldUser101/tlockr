@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+	render.cpp:
+		This file contains the QML rendering logic.
+*/
+
 #include <QGuiApplication>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>

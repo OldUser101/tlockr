@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    build.rs:
+        Build script, used for building and linking with CMake.
+*/
+
 use std::env;
 use std::path::PathBuf;
 

@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    output.rs:
+        Contains a dispatch method to obtain the output display dimensions.
+*/
+
 use crate::wayland::state::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,

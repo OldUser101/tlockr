@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    registry.rs:
+        Binds Wayland interfaces to objects in WaylandState.
+*/
+
 use crate::wayland::state::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,

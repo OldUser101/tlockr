@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    interface.rs:
+        Safe getter/setter methods for the ApplicationState object.
+*/
+
 use crate::{
     shared::ffi::QmlRenderer,
     shared::state::{ApplicationState, State},

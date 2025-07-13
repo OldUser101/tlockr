@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    renderer.rs:
+        Initializes the QML renderer and provides callbacks for the renderer to
+        trigger content refresh.
+*/
+
 use crate::{
     shared::{
         ffi::{cleanup_renderer, initialize_renderer, set_callbacks},

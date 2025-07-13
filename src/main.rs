@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    main.rs:
+        Main entry point, contains basic argument parsing, and initializes
+        various state objects.
+*/
+
 pub mod shared;
 pub mod wayland;
 

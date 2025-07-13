@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    keyboard.rs:
+        Obtains a keymap which can be used to get key values from scancodes,
+        and contains basic keypress handling.
+*/
+
 use crate::wayland::state::WaylandState;
 use memmap2::MmapOptions;
 use std::{

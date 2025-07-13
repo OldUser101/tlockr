@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    ffi.rs:
+        Prototypes for C++ renderer FFI.
+*/
+
 use std::os::raw::{c_char, c_int, c_void};
 
 #[repr(C)]

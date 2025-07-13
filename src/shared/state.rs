@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2025, Nathan Gill
 
+/*
+    state.rs:
+        This file defines the ApplicationState object, which is C-compatible,
+        for the shared state.
+*/
+
 use std::os::raw::{c_char, c_int};
 
 use crate::shared::ffi::QmlRenderer;
