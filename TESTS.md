@@ -1,6 +1,6 @@
 # tlockr tests
 
-This directory contains some helpful tests for the renderer.
+The `test` directory contains some helpful tests for the renderer.
 
 - `test_lock.qml`
     - Shows a mock "lock screen" with a central panel.
