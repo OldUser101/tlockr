@@ -23,7 +23,7 @@ impl WaylandState {
         state.buffers.as_ref().expect("buffers is None")[0].data as *mut c_void
     }
 
-    unsafe extern "C" fn frame_ready_callback(user_data: *mut c_void, buffer: *mut c_void) {
+    unsafe extern "C" fn _frame_ready_callback(user_data: *mut c_void, buffer: *mut c_void) {
         let state = unsafe { &mut *(user_data as *mut WaylandState) };
 
         if let (Some(surface), Some(viewport)) = (&state.surface, &state.viewport) {
@@ -47,6 +47,7 @@ impl WaylandState {
                 self.width,
                 self.height,
                 get_qml_path(self.app_state).unwrap(),
+                self.app_state,
             )
         };
 
@@ -57,7 +58,6 @@ impl WaylandState {
                 set_callbacks(
                     renderer,
                     Self::get_buffer_callback,
-                    Self::frame_ready_callback,
                     self as *mut _ as *mut c_void,
                 );
             }

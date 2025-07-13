@@ -14,7 +14,6 @@ extern "C"
     struct QmlRenderer;
 
     typedef void *(*RsGetBufferCallback)(void *user_data);
-    typedef void (*RsFrameReadyCallback)(void *user_data, void *buffer);
 
     QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath);
     int start_renderer(QmlRenderer *renderer);

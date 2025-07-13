@@ -42,6 +42,19 @@ extern "C"
 	typedef void *(*RsGetBufferCallback)(void *user_data);
 	typedef void (*RsFrameReadyCallback)(void *user_data, void *buffer);
 
+	struct RsFrameRenderedEvent
+	{
+		void *buf;
+	};
+
+	struct ApplicationState
+	{
+		const char *qmlPath;
+		int state;
+		void *renderer;
+		int rendererFd;
+	};
+
 	struct QmlRenderer
 	{
 		QGuiApplication *app;
@@ -61,7 +74,6 @@ extern "C"
 		bool running = false;
 
 		RsGetBufferCallback getBufferCallback = nullptr;
-		RsFrameReadyCallback frameReadyCallback = nullptr;
 		void *userData = nullptr;
 
 		std::thread renderThread;
@@ -70,13 +82,18 @@ extern "C"
 		std::mutex initMutex;
 		std::condition_variable initCondition;
 		std::atomic<bool> initialized{false};
+
+		ApplicationState *appState;
 	};
 
-	QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath)
+	static RsFrameRenderedEvent frameRenderedEvent = {0};
+
+	QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath, ApplicationState *appState)
 	{
 		QmlRenderer *renderer = new QmlRenderer();
 		renderer->fbSize = QSize(width, height);
 		renderer->qmlPath = qmlPath;
+		renderer->appState = appState;
 
 		return renderer;
 	}
@@ -97,6 +114,26 @@ extern "C"
 			renderer->initialized = true;
 		}
 		renderer->initCondition.notify_one();
+	}
+
+	int write_eventfd_notification(int fd, void *ptr)
+	{
+		uint64_t val = reinterpret_cast<uintptr_t>(ptr);
+
+		ssize_t res = write(fd, &val, sizeof(val));
+		if (res != sizeof(val))
+		{
+			std::cerr << "Failed to write eventfd notification\n";
+			return -1;
+		}
+
+		return 0;
+	}
+
+	void send_frame_rendered_event(QmlRenderer *renderer, void *buf)
+	{
+		frameRenderedEvent.buf = buf;
+		write_eventfd_notification(renderer->appState->rendererFd, &frameRenderedEvent);
 	}
 
 	void setup_renderer(QmlRenderer *renderer)
@@ -209,11 +246,11 @@ extern "C"
 			renderer->renderControl->render();
 			renderer->renderControl->endFrame();
 			
-			if (renderer->getBufferCallback && renderer->frameReadyCallback) {
+			if (renderer->getBufferCallback) {
 				void* buffer = renderer->getBufferCallback(renderer->userData);
 				if (buffer) {
 					render(*renderer->fb, buffer);
-					renderer->frameReadyCallback(renderer->userData, buffer);
+					send_frame_rendered_event(renderer, buffer);
 				}
 			} });
 
@@ -270,13 +307,12 @@ extern "C"
 		return 0;
 	}
 
-	void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, RsFrameReadyCallback frameReady, void *userData)
+	void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, void *userData)
 	{
 		if (!renderer)
 			return;
 
 		renderer->getBufferCallback = getBuffer;
-		renderer->frameReadyCallback = frameReady;
 		renderer->userData = userData;
 	}
 
