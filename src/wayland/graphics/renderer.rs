@@ -9,7 +9,7 @@
 
 use crate::{
     shared::{
-        ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
+        ffi::{RendererEvent, cleanup_renderer, initialize_renderer, set_callbacks},
         interface::{get_qml_path, get_renderer, set_renderer},
     },
     wayland::state::WaylandState,
@@ -21,6 +21,36 @@ impl WaylandState {
         let state = unsafe { &mut *(user_data as *mut WaylandState) };
 
         state.buffers.as_ref().expect("buffers is None")[0].data as *mut c_void
+    }
+
+    pub unsafe fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(renderer_fd) = &self.renderer_event_fd {
+            let ptr = renderer_fd.read()? as *mut RendererEvent;
+
+            if ptr.is_null() {
+                return Err("Received NULL buffer".into());
+            }
+
+            let event = unsafe { ptr.read() };
+
+            if let (Some(surface), Some(viewport)) = (&self.surface, &self.viewport) {
+                if let Some(buffers) = &self.buffers {
+                    if let Some(found_buffer) = buffers
+                        .iter()
+                        .find(|b| b.data as *mut c_void == event.buffer)
+                    {
+                        surface.attach(Some(&found_buffer.buffer), 0, 0);
+                        surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
+                        viewport.set_destination(self.width, self.height);
+                        surface.commit();
+                    } else {
+                        println!("No matching buffer found.");
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     unsafe extern "C" fn _frame_ready_callback(user_data: *mut c_void, buffer: *mut c_void) {

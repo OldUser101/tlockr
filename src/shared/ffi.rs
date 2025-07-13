@@ -22,6 +22,11 @@ pub struct BufferData {
     pub data: *mut c_void,
 }
 
+#[repr(C)]
+pub struct RendererEvent {
+    pub buffer: *mut c_void,
+}
+
 pub type RsGetBufferCallback = unsafe extern "C" fn(user_data: *mut c_void) -> *mut c_void;
 
 unsafe extern "C" {

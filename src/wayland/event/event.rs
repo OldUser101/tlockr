@@ -39,9 +39,9 @@ impl WaylandState {
         for i in 0..num_events {
             match events[i].data() {
                 WAYLAND_EVENT_TAG => wayland_event_received = true,
-                RENDERER_EVENT_TAG => {
-                    println!("Got renderer event");
-                }
+                RENDERER_EVENT_TAG => unsafe {
+                    self.handle_renderer_event()?;
+                },
                 _ => {}
             }
         }
