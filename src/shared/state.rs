@@ -1,6 +1,6 @@
 use std::os::raw::{c_char, c_int};
 
-use crate::wayland::ffi::QmlRenderer;
+use crate::shared::ffi::QmlRenderer;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]

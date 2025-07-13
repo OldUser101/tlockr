@@ -4,13 +4,37 @@
 
 use crate::shared::interface::get_renderer;
 use crate::shared::state::State;
-use crate::wayland::interface::WaylandState;
-use crate::{shared::interface::set_state, wayland::ffi::start_renderer};
-use wayland_client::{Connection, Dispatch, QueueHandle};
+use crate::shared::{ffi::start_renderer, interface::set_state};
+use crate::wayland::state::WaylandState;
+use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
 use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_surface_v1::{self, ExtSessionLockSurfaceV1},
     ext_session_lock_v1::{self, ExtSessionLockV1},
 };
+
+impl WaylandState {
+    pub fn lock(
+        &mut self,
+        event_queue: &EventQueue<Self>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let qh = event_queue.handle();
+
+        if let (Some(compositor), Some(viewporter)) = (&self.compositor, &self.viewporter) {
+            let surface = compositor.create_surface(&qh, ());
+            let viewport = viewporter.get_viewport(&surface, &qh, ());
+            self.surface = Some(surface);
+            self.viewport = Some(viewport);
+        }
+
+        if let Some(session_lock_manager) = &self.session_lock_manager {
+            self.session_lock = Some(session_lock_manager.lock(&qh, ()));
+        } else {
+            return Err("Failed to lock session.".to_string().into());
+        }
+
+        Ok(())
+    }
+}
 
 impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
     fn event(

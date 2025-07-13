@@ -2,7 +2,7 @@
     Empty dispatch handlers for various Wayland objects
 */
 
-use crate::wayland::interface::WaylandState;
+use crate::wayland::state::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::{

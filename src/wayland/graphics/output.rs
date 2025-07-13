@@ -2,7 +2,7 @@
     WlOutput related dispatch handlers
 */
 
-use crate::wayland::interface::WaylandState;
+use crate::wayland::state::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::wl_output::{self, WlOutput},

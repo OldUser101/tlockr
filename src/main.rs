@@ -3,7 +3,7 @@ pub mod wayland;
 
 use std::{env, ffi::CString};
 
-use crate::{shared::state::ApplicationState, wayland::interface::WaylandState};
+use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();

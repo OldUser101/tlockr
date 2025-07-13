@@ -2,7 +2,7 @@
     WlKeyboard related dispatch handlers
 */
 
-use crate::wayland::{interface::WaylandState, keyboard::KeyboardMapping};
+use crate::wayland::state::WaylandState;
 use memmap2::MmapOptions;
 use std::{
     fs::File,
@@ -15,7 +15,14 @@ use wayland_client::{
         wl_seat::{self, Capability, WlSeat},
     },
 };
-use xkbcommon_rs::State;
+use xkbcommon_rs::{Keymap, State};
+
+pub struct KeyboardMapping {
+    pub file: std::fs::File,
+    pub mmap: memmap2::Mmap,
+    pub keymap: Option<Keymap>,
+    pub state: Option<State>,
+}
 
 impl Dispatch<WlKeyboard, ()> for WaylandState {
     fn event(

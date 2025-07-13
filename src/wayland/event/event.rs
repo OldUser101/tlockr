@@ -2,7 +2,7 @@ use crate::shared::{
     interface::{get_renderer_fd, get_state},
     state::State,
 };
-use crate::wayland::interface::WaylandState;
+use crate::wayland::state::WaylandState;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use std::os::fd::BorrowedFd;
 use wayland_client::EventQueue;

@@ -1,9 +1,7 @@
-pub mod buffer;
-pub mod dispatch;
+mod empty;
 pub mod event;
-pub mod ffi;
-pub mod interface;
-pub mod keyboard;
+pub mod graphics;
+pub mod input;
 pub mod lock;
-pub mod renderer;
+pub mod registry;
 pub mod state;

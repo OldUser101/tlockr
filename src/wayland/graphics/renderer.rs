@@ -1,9 +1,9 @@
 use crate::{
-    shared::interface::{get_qml_path, get_renderer, set_renderer},
-    wayland::{
+    shared::{
         ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
-        interface::WaylandState,
+        interface::{get_qml_path, get_renderer, set_renderer},
     },
+    wayland::state::WaylandState,
 };
 use std::ffi::c_void;
 

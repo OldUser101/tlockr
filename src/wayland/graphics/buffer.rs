@@ -1,10 +1,13 @@
-use crate::wayland::interface::WaylandState;
+use crate::wayland::state::WaylandState;
 use nix::libc::{MAP_SHARED, PROT_READ, PROT_WRITE, ftruncate, mmap};
 use nix::sys::memfd::{MFdFlags, memfd_create};
 use std::os::fd::{AsFd, AsRawFd, OwnedFd};
 use wayland_client::EventQueue;
-use wayland_client::protocol::wl_buffer::WlBuffer;
 use wayland_client::protocol::wl_shm;
+use wayland_client::{
+    Connection, Dispatch, QueueHandle,
+    protocol::wl_buffer::{self, WlBuffer},
+};
 
 pub struct Buffer {
     pub buffer: WlBuffer,
@@ -83,5 +86,25 @@ impl WaylandState {
         println!("Allocated {} buffers: {} bytes", n, size);
 
         Ok(())
+    }
+}
+
+impl Dispatch<WlBuffer, i32> for WaylandState {
+    fn event(
+        state: &mut Self,
+        _proxy: &WlBuffer,
+        event: <WlBuffer as wayland_client::Proxy>::Event,
+        data: &i32,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+    ) {
+        match event {
+            wl_buffer::Event::Release => {
+                if let Some(buffers) = state.buffers.as_mut() {
+                    buffers[*data as usize].in_use = false;
+                }
+            }
+            _ => {}
+        }
     }
 }

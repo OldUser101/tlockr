@@ -1,6 +1,6 @@
 use crate::{
+    shared::ffi::QmlRenderer,
     shared::state::{ApplicationState, State},
-    wayland::ffi::QmlRenderer,
 };
 use std::os::raw::{c_char, c_int};
 
