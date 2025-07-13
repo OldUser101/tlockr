@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
+
 use crate::{
     shared::{
         ffi::{cleanup_renderer, initialize_renderer, set_callbacks},

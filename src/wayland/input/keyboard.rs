@@ -1,6 +1,5 @@
-/*
-    WlKeyboard related dispatch handlers
-*/
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
 
 use crate::wayland::state::WaylandState;
 use memmap2::MmapOptions;

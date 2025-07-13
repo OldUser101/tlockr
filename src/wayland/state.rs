@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
+
 use crate::shared::interface::{get_state, set_renderer_fd};
 use crate::shared::{interface::set_state, state::State};
 use crate::{
