@@ -1,12 +1,12 @@
-# TLockR
+# tlockr
 
 ![Build Status](https://github.com/OldUser101/tlockr/actions/workflows/default.yml/badge.svg)
 
-TLockR is a highly customisable screen locker for Wayland-based compositors.
+tlockr is a highly customisable screen locker for Wayland-based compositors.
 
 ## What is it?
 
-TLockR is a screen locker for Wayland compositors that support the `ext_session_lock_v1` protocol. 
+tlockr is a screen locker for Wayland compositors that support the `ext_session_lock_v1` protocol. 
 
 Popular examples of compositors that support this protocol are:
 
@@ -16,13 +16,13 @@ Popular examples of compositors that support this protocol are:
 - niri
 - Wayfire
 
-Most other screen lockers (like swaylock) have limited customisability. TLockR addresses this, allowing users to select various QML themes to display.
+Most other screen lockers (like swaylock) have limited customisability. tlockr addresses this, allowing users to select various QML themes to display.
 
-This makes TLockR much more flexible that other screen lockers, allowing for dynamic images, animations, and widgets.
+This makes tlockr much more flexible that other screen lockers, allowing for dynamic images, animations, and widgets.
 
 ## How does it work?
 
-TLockR uses a mix of Rust and C++ to achieve this.
+tlockr uses a mix of Rust and C++ to achieve this.
 
 The Rust code focuses on the Wayland backend, managing Wayland objects and buffers. It also handles authentication (when it is implemented), and provides interfaces for the C++ frontend.
 
@@ -30,13 +30,13 @@ The C++ code focuses on the Qt frontend. It handles the initialization and use o
 
 ## How do I use it?
 
-TLockR is not yet ready to be used a screen locker. Since authentication is not yet implemented, you will get locked out if you run it.
+tlockr is not yet ready to be used a screen locker. Since authentication is not yet implemented, you will get locked out if you run it.
 
 However, you can still build it if you feel like it.
 
 ## How do I build it?
 
-To build TLockR, you will need to start by cloning this repository:
+To build tlockr, you will need to start by cloning this repository:
 
 ```sh
 $ git clone https://github.com/OldUser101/tlockr.git
@@ -60,7 +60,7 @@ The compiled binary can be found at `target/release/tlockr`.
 
 ## Contributing
 
-Contributions to TLockR are always welcome!
+Contributions to tlockr are always welcome!
 
 The recommended workflow for this is:
 
@@ -71,10 +71,12 @@ The recommended workflow for this is:
 
 Any changes you make will need to compile without errors before you will be able to merge your pull request.
 
-Since TLockR is in the early stages of development, all sorts of contributions are welcome. THis includes those that don't directly result from an issue, just make sure you detail exactly what changes you've made.
+Since tlockr is in the early stages of development, all sorts of contributions are welcome. THis includes those that don't directly result from an issue, just make sure you detail exactly what changes you've made.
 
 If you really want to, you can make a draft pull request to discuss your changes as you are working on them.
 
 ## License
 
-TLockR is licensed under the GNU GPL Version 3. See [LICENSE](https://github.com/OldUser101/tlockr?tab=GPL-3.0-1-ov-file) for further details.
+tlockr is licensed under the GNU GPL Version 3. See [LICENSE](https://github.com/OldUser101/tlockr?tab=GPL-3.0-1-ov-file) for further details.
+
+Copyright © 2025, Nathan Gill
