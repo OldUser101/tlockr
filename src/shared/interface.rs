@@ -39,12 +39,10 @@ macro_rules! safe_setter {
 
 safe_getter!(get_state, state, State);
 safe_getter!(get_renderer_fd, renderer_fd, c_int);
-safe_getter!(get_wayland_fd, wayland_fd, c_int);
 safe_getter!(get_renderer, renderer, *mut QmlRenderer);
 safe_getter!(get_qml_path, qml_path, *mut c_char);
 
 safe_setter!(set_state, state, State);
 safe_setter!(set_renderer_fd, renderer_fd, c_int);
-safe_setter!(set_wayland_fd, wayland_fd, c_int);
 safe_setter!(set_renderer, renderer, *mut QmlRenderer);
 safe_setter!(set_qml_path, qml_path, *mut c_char);

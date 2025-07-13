@@ -65,7 +65,6 @@ pub struct WaylandState {
     pub app_state: *mut ApplicationState,
 
     pub renderer_event_fd: Option<EventFd>,
-    pub wayland_event_fd: Option<EventFd>,
 }
 
 impl WaylandState {
@@ -92,7 +91,6 @@ impl WaylandState {
             output_configured: false,
             app_state: app_state,
             renderer_event_fd: None,
-            wayland_event_fd: None,
         }
     }
 

@@ -27,7 +27,6 @@ pub struct ApplicationState {
     pub state: State,
     pub renderer: *mut QmlRenderer,
     pub renderer_fd: c_int,
-    pub wayland_fd: c_int,
 }
 
 impl ApplicationState {
@@ -37,7 +36,6 @@ impl ApplicationState {
             state: State::None,
             renderer: std::ptr::null_mut(),
             renderer_fd: -1,
-            wayland_fd: -1,
         }
     }
 }
