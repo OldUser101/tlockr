@@ -80,35 +80,6 @@ impl LockState {
     }
 }
 
-macro_rules! empty_dispatch {
-    ($state:ty, $($proxy:ty),*) => {
-        $(
-            impl Dispatch<$proxy, ()> for $state {
-                fn event(
-                    _state: &mut Self,
-                    _proxy: &$proxy,
-                    _event: <$proxy as wayland_client::Proxy>::Event,
-                    _data: &(),
-                    _conn: &Connection,
-                    _qh: &QueueHandle<Self>,
-                ) {}
-            }
-        )*
-    };
-}
-
-empty_dispatch! {
-    LockState,
-    WlDisplay,
-    WlCompositor,
-    WpViewporter,
-    ExtSessionLockManagerV1,
-    WlSurface,
-    WlShm,
-    WlShmPool,
-    WpViewport
-}
-
 impl Dispatch<WlOutput, ()> for LockState {
     fn event(
         state: &mut Self,

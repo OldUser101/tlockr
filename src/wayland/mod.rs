@@ -1,4 +1,5 @@
 pub mod buffer;
+pub mod dispatch;
 pub mod event;
 pub mod ffi;
 pub mod interface;
