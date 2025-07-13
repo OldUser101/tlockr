@@ -1,7 +1,23 @@
-use crate::{buffer::Buffer, keyboard::KeyboardMapping, state::LockState};
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
 
+/*
+    state.rs:
+        Defines the WaylandState object, which holds the state of the Wayland
+        backend, and links with the rest of the application.
+*/
+
+use crate::shared::interface::{get_state, set_renderer_fd};
+use crate::shared::{interface::set_state, state::State};
+use crate::{
+    shared::state::ApplicationState,
+    wayland::{graphics::buffer::Buffer, input::keyboard::KeyboardMapping},
+};
+use nix::sys::eventfd::EventFd;
+use std::os::fd::AsRawFd;
+use wayland_client::EventQueue;
 use wayland_client::{
-    Connection, EventQueue,
+    Connection,
     protocol::{
         wl_compositor::WlCompositor, wl_display::WlDisplay, wl_keyboard::WlKeyboard,
         wl_output::WlOutput, wl_registry::WlRegistry, wl_seat::WlSeat, wl_shm::WlShm,
@@ -17,7 +33,7 @@ use wayland_protocols::{
     wp::viewporter::client::{wp_viewport::WpViewport, wp_viewporter::WpViewporter},
 };
 
-pub struct WaylandInterfaces {
+pub struct WaylandState {
     pub connection: Option<Connection>,
     pub display: Option<WlDisplay>,
     pub registry: Option<WlRegistry>,
@@ -45,10 +61,14 @@ pub struct WaylandInterfaces {
     pub height: i32,
 
     pub output_configured: bool,
+
+    pub app_state: *mut ApplicationState,
+
+    pub renderer_event_fd: Option<EventFd>,
 }
 
-impl WaylandInterfaces {
-    pub fn new() -> Self {
+impl WaylandState {
+    pub fn new(app_state: *mut ApplicationState) -> Self {
         Self {
             connection: None,
             display: None,
@@ -69,10 +89,14 @@ impl WaylandInterfaces {
             width: -1,
             height: -1,
             output_configured: false,
+            app_state: app_state,
+            renderer_event_fd: None,
         }
     }
 
-    pub fn create_and_bind(&mut self) -> Result<EventQueue<LockState>, Box<dyn std::error::Error>> {
+    pub fn create_and_bind(
+        &mut self,
+    ) -> Result<EventQueue<WaylandState>, Box<dyn std::error::Error>> {
         let conn = Connection::connect_to_env()?;
         let display = conn.display();
 
@@ -90,5 +114,46 @@ impl WaylandInterfaces {
 
     pub fn ready(&self) -> bool {
         return self.output_configured;
+    }
+
+    pub fn initialize(&mut self) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
+        let event_queue = self.create_and_bind()?;
+
+        set_state(self.app_state, State::Initialized);
+
+        let renderer_fd = EventFd::new()?;
+        set_renderer_fd(self.app_state, renderer_fd.as_raw_fd());
+        self.renderer_event_fd = Some(renderer_fd);
+
+        Ok(event_queue)
+    }
+
+    pub fn roundtrip(
+        &mut self,
+        event_queue: &mut EventQueue<Self>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        event_queue.roundtrip(self)?;
+        Ok(())
+    }
+
+    pub fn update_states(
+        &mut self,
+        event_queue: &EventQueue<Self>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match get_state(self.app_state).unwrap() {
+            State::Initialized => {
+                if self.ready() {
+                    set_state(self.app_state, State::Ready);
+                }
+            }
+            State::Ready => {
+                self.allocate_buffers(event_queue, 2)?;
+                self.initialize_renderer()?;
+                self.lock(event_queue)?;
+            }
+            _ => {}
+        }
+
+        Ok(())
     }
 }

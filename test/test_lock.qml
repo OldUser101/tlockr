@@ -86,7 +86,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: 50
-        text: "TLockR - Session Lock Test"
+        text: "tlockr - Session Lock Test"
         color: "#666666"
         font.pixelSize: 12
     }

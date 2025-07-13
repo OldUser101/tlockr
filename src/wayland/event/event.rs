@@ -1,14 +1,26 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
+
+/*
+    event.rs:
+        Contains event loops that handle both Wayland events from an EventQueue
+        and from an EventFd, used for signals from the renderer, via epoll.
+*/
+
+use crate::shared::{
+    interface::{get_renderer_fd, get_state},
+    state::State,
+};
+use crate::wayland::state::WaylandState;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
+use std::os::fd::BorrowedFd;
 use wayland_client::EventQueue;
 use wayland_client::backend::ReadEventsGuard;
 
-use crate::lock::State;
-use crate::state::LockState;
-
 const WAYLAND_EVENT_TAG: u64 = 0;
-const _RENDERER_EVENT_TAG: u64 = 1;
+const RENDERER_EVENT_TAG: u64 = 1;
 
-impl LockState {
+impl WaylandState {
     fn dispatch_events(
         &mut self,
         epoll: &Epoll,
@@ -27,6 +39,9 @@ impl LockState {
         for i in 0..num_events {
             match events[i].data() {
                 WAYLAND_EVENT_TAG => wayland_event_received = true,
+                RENDERER_EVENT_TAG => unsafe {
+                    self.handle_renderer_event()?;
+                },
                 _ => {}
             }
         }
@@ -49,7 +64,13 @@ impl LockState {
         let epoll = Epoll::new(EpollCreateFlags::empty())?;
         let mut events = [EpollEvent::empty(); 10];
 
-        while self.state != State::Unlocked {
+        let renderer_fd =
+            unsafe { BorrowedFd::borrow_raw(get_renderer_fd(self.app_state).unwrap()) };
+
+        let renderer_event = EpollEvent::new(EpollFlags::EPOLLIN, RENDERER_EVENT_TAG);
+        epoll.add(renderer_fd, renderer_event)?;
+
+        while get_state(self.app_state).unwrap() != State::Unlocked {
             self.update_states(&event_queue)?;
 
             event_queue.flush()?;
@@ -59,6 +80,8 @@ impl LockState {
                 self.dispatch_events(&epoll, &mut events, read_guard, event_queue)?;
             }
         }
+
+        epoll.delete(renderer_fd)?;
 
         Ok(())
     }

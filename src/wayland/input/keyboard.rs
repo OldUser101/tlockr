@@ -1,4 +1,18 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
+
+/*
+    keyboard.rs:
+        Obtains a keymap which can be used to get key values from scancodes,
+        and contains basic keypress handling.
+*/
+
+use crate::wayland::state::WaylandState;
 use memmap2::MmapOptions;
+use std::{
+    fs::File,
+    os::fd::{FromRawFd, IntoRawFd},
+};
 use wayland_client::{
     Connection, Dispatch, QueueHandle, WEnum,
     protocol::{
@@ -6,26 +20,18 @@ use wayland_client::{
         wl_seat::{self, Capability, WlSeat},
     },
 };
-
-use std::{
-    fs::File,
-    os::fd::{FromRawFd, IntoRawFd},
-};
-
-use crate::state::LockState;
-
 use xkbcommon_rs::{Keymap, State};
 
 pub struct KeyboardMapping {
-    _file: std::fs::File,
-    _mmap: memmap2::Mmap,
-    keymap: Option<Keymap>,
-    state: Option<State>,
+    pub file: std::fs::File,
+    pub mmap: memmap2::Mmap,
+    pub keymap: Option<Keymap>,
+    pub state: Option<State>,
 }
 
-impl Dispatch<WlKeyboard, ()> for LockState {
+impl Dispatch<WlKeyboard, ()> for WaylandState {
     fn event(
-        lock_state: &mut Self,
+        wayland_state: &mut Self,
         _proxy: &WlKeyboard,
         event: <WlKeyboard as wayland_client::Proxy>::Event,
         _data: &(),
@@ -52,12 +58,12 @@ impl Dispatch<WlKeyboard, ()> for LockState {
                                 Ok(keymap) => {
                                     let state = State::new(keymap.clone());
                                     let mapping = KeyboardMapping {
-                                        _file: file,
-                                        _mmap: mmap,
+                                        file: file,
+                                        mmap: mmap,
                                         keymap: Some(keymap),
                                         state: Some(state),
                                     };
-                                    lock_state.interfaces.keymap = Some(mapping);
+                                    wayland_state.keymap = Some(mapping);
                                     println!("Found xkbV1 format keymap and created state.");
                                 }
                                 Err(_) => {
@@ -77,7 +83,7 @@ impl Dispatch<WlKeyboard, ()> for LockState {
                 key,
                 state: _,
             } => {
-                if let Some(ref keymap) = lock_state.interfaces.keymap {
+                if let Some(ref keymap) = wayland_state.keymap {
                     if let (Some(_keymap_file), Some(state)) = (&keymap.keymap, &keymap.state) {
                         let keycode = key + 8;
                         let keysym = state.key_get_one_sym(keycode);
@@ -91,7 +97,7 @@ impl Dispatch<WlKeyboard, ()> for LockState {
     }
 }
 
-impl Dispatch<WlSeat, ()> for LockState {
+impl Dispatch<WlSeat, ()> for WaylandState {
     fn event(
         state: &mut Self,
         proxy: &WlSeat,
@@ -103,16 +109,14 @@ impl Dispatch<WlSeat, ()> for LockState {
         match event {
             wl_seat::Event::Capabilities { capabilities } => match capabilities {
                 WEnum::Value(bits) => {
-                    if bits.contains(Capability::Keyboard) && state.interfaces.keyboard.is_none() {
+                    if bits.contains(Capability::Keyboard) && state.keyboard.is_none() {
                         let keyboard = proxy.get_keyboard(qh, ());
-                        state.interfaces.keyboard = Some(keyboard);
+                        state.keyboard = Some(keyboard);
                         println!("Acquired keyboard input interface.");
-                    } else if !bits.contains(Capability::Keyboard)
-                        && state.interfaces.keyboard.is_some()
-                    {
-                        if let Some(ref keyboard) = state.interfaces.keyboard {
+                    } else if !bits.contains(Capability::Keyboard) && state.keyboard.is_some() {
+                        if let Some(ref keyboard) = state.keyboard {
                             keyboard.release();
-                            state.interfaces.keyboard = None;
+                            state.keyboard = None;
                         }
                     }
                 }
