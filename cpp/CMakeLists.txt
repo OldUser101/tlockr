@@ -11,7 +11,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 COMPONENTS Core Quick Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Core Quick REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC
   src/render.cpp
@@ -20,7 +20,6 @@ add_library(${PROJECT_NAME} STATIC
 target_link_libraries(${PROJECT_NAME} PRIVATE
   Qt6::Core
   Qt6::Quick
-  Qt6::Widgets
 )
 
 install(TARGETS ${PROJECT_NAME}
