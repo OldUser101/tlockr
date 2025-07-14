@@ -13,8 +13,7 @@ use crate::{
     shared::state::ApplicationState,
     wayland::{graphics::buffer::Buffer, input::keyboard::KeyboardMapping},
 };
-use nix::sys::eventfd::EventFd;
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsRawFd, OwnedFd};
 use wayland_client::EventQueue;
 use wayland_client::{
     Connection,
@@ -64,7 +63,8 @@ pub struct WaylandState {
 
     pub app_state: *mut ApplicationState,
 
-    pub renderer_event_fd: Option<EventFd>,
+    pub renderer_read_fd: Option<OwnedFd>,
+    pub renderer_write_fd: Option<OwnedFd>,
 }
 
 impl WaylandState {
@@ -90,7 +90,8 @@ impl WaylandState {
             height: -1,
             output_configured: false,
             app_state: app_state,
-            renderer_event_fd: None,
+            renderer_read_fd: None,
+            renderer_write_fd: None,
         }
     }
 
@@ -121,9 +122,10 @@ impl WaylandState {
 
         set_state(self.app_state, State::Initialized);
 
-        let renderer_fd = EventFd::new()?;
-        set_renderer_fd(self.app_state, renderer_fd.as_raw_fd());
-        self.renderer_event_fd = Some(renderer_fd);
+        let (renderer_read_fd, renderer_write_fd) = nix::unistd::pipe()?;
+        set_renderer_fd(self.app_state, renderer_write_fd.as_raw_fd());
+        self.renderer_read_fd = Some(renderer_read_fd);
+        self.renderer_write_fd = Some(renderer_write_fd);
 
         Ok(event_queue)
     }
