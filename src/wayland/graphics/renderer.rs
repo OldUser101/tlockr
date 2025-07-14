@@ -31,14 +31,27 @@ impl WaylandState {
     }
 
     pub unsafe fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(renderer_fd) = &self.renderer_event_fd {
-            let ptr = renderer_fd.read()? as *mut RendererEvent;
+        if let Some(renderer_fd) = &self.renderer_read_fd {
+            let mut event_ptr = std::ptr::null_mut::<RendererEvent>();
+            let bytes_read = unsafe {
+                nix::unistd::read(
+                    renderer_fd,
+                    std::slice::from_raw_parts_mut(
+                        &mut event_ptr as *mut _ as *mut u8,
+                        std::mem::size_of::<*mut RendererEvent>(),
+                    ),
+                )?
+            };
 
-            if ptr.is_null() {
+            if bytes_read != std::mem::size_of::<*mut RendererEvent>() {
+                return Err("Failed to read event pipe".into());
+            }
+
+            if event_ptr.is_null() {
                 return Err("Received NULL buffer".into());
             }
 
-            let event = unsafe { ptr.read() };
+            let event = unsafe { &*event_ptr };
 
             if let (Some(surface), Some(viewport)) = (&self.surface, &self.viewport) {
                 if let Some(buffers) = &mut self.buffers {

@@ -7,12 +7,10 @@
         and from an EventFd, used for signals from the renderer, via epoll.
 */
 
-use crate::shared::{
-    interface::{get_renderer_fd, get_state},
-    state::State,
-};
+use crate::shared::{interface::get_state, state::State};
 use crate::wayland::state::WaylandState;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
+use std::os::fd::AsRawFd;
 use std::os::fd::BorrowedFd;
 use wayland_client::EventQueue;
 use wayland_client::backend::ReadEventsGuard;
@@ -64,8 +62,8 @@ impl WaylandState {
         let epoll = Epoll::new(EpollCreateFlags::empty())?;
         let mut events = [EpollEvent::empty(); 10];
 
-        let renderer_fd =
-            unsafe { BorrowedFd::borrow_raw(get_renderer_fd(self.app_state).unwrap()) };
+        let renderer_fd_raw = self.renderer_read_fd.as_ref().unwrap().as_raw_fd();
+        let renderer_fd = unsafe { BorrowedFd::borrow_raw(renderer_fd_raw) };
 
         let renderer_event = EpollEvent::new(EpollFlags::EPOLLIN, RENDERER_EVENT_TAG);
         epoll.add(renderer_fd, renderer_event)?;
