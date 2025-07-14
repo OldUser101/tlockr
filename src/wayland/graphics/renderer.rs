@@ -61,24 +61,6 @@ impl WaylandState {
         Ok(())
     }
 
-    unsafe extern "C" fn _frame_ready_callback(user_data: *mut c_void, buffer: *mut c_void) {
-        let state = unsafe { &mut *(user_data as *mut WaylandState) };
-
-        if let (Some(surface), Some(viewport)) = (&state.surface, &state.viewport) {
-            if let Some(buffers) = &state.buffers {
-                if let Some(found_buffer) = buffers.iter().find(|b| b.data as *mut c_void == buffer)
-                {
-                    surface.attach(Some(&found_buffer.buffer), 0, 0);
-                    surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
-                    viewport.set_destination(state.width, state.height);
-                    surface.commit();
-                } else {
-                    println!("No matching buffer found.");
-                }
-            }
-        }
-    }
-
     pub fn initialize_renderer(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let renderer = unsafe {
             initialize_renderer(

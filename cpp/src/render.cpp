@@ -68,7 +68,6 @@ extern "C"
 		QOpenGLFramebufferObject *fb;
 		QQmlEngine *engine;
 		QQmlComponent *component;
-		QTimer *renderTimer;
 
 		const char *qmlPath;
 		bool running = false;
@@ -196,7 +195,6 @@ extern "C"
 
 		renderer->engine = new QQmlEngine();
 		renderer->component = new QQmlComponent(renderer->engine);
-		renderer->renderTimer = new QTimer();
 	}
 
 	void setup_renderer_signals(QmlRenderer *renderer)
@@ -222,7 +220,6 @@ extern "C"
 				rootItem->setHeight(renderer->fbSize.height());
 
 				renderer->running = true;
-				renderer->renderTimer->start(32);	// 32 ms, 30 Hz
 			} else if (renderer->component->status() == QQmlComponent::Error) {
 				std::cerr << "QML Component has errors:" << std::endl;
 				const auto errors = renderer->component->errors();
@@ -230,7 +227,7 @@ extern "C"
 					std::cerr << "  " << error.toString().toStdString() << std::endl;
 			} });
 
-		QObject::connect(renderer->renderTimer, &QTimer::timeout, [renderer]()
+		QObject::connect(renderer->renderControl, &QQuickRenderControl::renderRequested, [renderer]()
 						 {
 			if (!renderer->running || !renderer->fb->isValid() || renderer->shouldStop)
 				return;
@@ -254,10 +251,13 @@ extern "C"
 				}
 			} });
 
+		QObject::connect(renderer->renderControl, &QQuickRenderControl::sceneChanged, [renderer]()
+						 { QMetaObject::invokeMethod(renderer->window, [renderer]()
+													 { renderer->window->update(); }, Qt::QueuedConnection); });
+
 		QObject::connect(renderer->app, &QGuiApplication::aboutToQuit, [renderer]()
 						 {
 			renderer->running = false;
-			renderer->renderTimer->stop();
 			renderer->renderControl->disconnect(); });
 	}
 
