@@ -7,100 +7,164 @@
         trigger content refresh.
 */
 
+use wayland_client::protocol::wl_surface::WlSurface;
+use wayland_protocols::wp::viewporter::client::wp_viewport::WpViewport;
+
 use crate::{
     shared::{
         ffi::{RendererEvent, cleanup_renderer, initialize_renderer, set_callbacks},
         interface::{get_qml_path, get_renderer, set_renderer},
     },
-    wayland::state::WaylandState,
+    wayland::{graphics::buffer::Buffer, state::WaylandState},
 };
-use std::ffi::c_void;
+use std::{ffi::c_void, i32};
 
 impl WaylandState {
+    /// Callback function for the renderer.
+    ///
+    /// This functions returns a pointer to the next available buffer.
+    /// This tells the renderer where to render its content.
     unsafe extern "C" fn get_buffer_callback(user_data: *mut c_void) -> *mut c_void {
+        if user_data.is_null() {
+            return std::ptr::null_mut();
+        }
+
         let state = unsafe { &*(user_data as *const WaylandState) };
 
-        if let Some(buffers) = &state.buffers {
-            if !buffers.is_empty() {
-                if let Some(buffer) = buffers.iter().find(|b| !b.in_use) {
-                    return buffer.data as *mut c_void;
-                }
-            }
-        }
-        std::ptr::null_mut()
+        state
+            .find_available_buffer()
+            .map(|b| b.data as *mut c_void)
+            .unwrap_or(std::ptr::null_mut())
     }
 
-    pub unsafe fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(renderer_fd) = &self.renderer_read_fd {
-            let mut event_ptr = std::ptr::null_mut::<RendererEvent>();
-            let bytes_read = unsafe {
-                nix::unistd::read(
-                    renderer_fd,
-                    std::slice::from_raw_parts_mut(
-                        &mut event_ptr as *mut _ as *mut u8,
-                        std::mem::size_of::<*mut RendererEvent>(),
-                    ),
-                )?
-            };
-
-            if bytes_read != std::mem::size_of::<*mut RendererEvent>() {
-                return Err("Failed to read event pipe".into());
-            }
-
-            if event_ptr.is_null() {
-                return Err("Received NULL buffer".into());
-            }
-
-            let event = unsafe { &*event_ptr };
-
-            if let (Some(surface), Some(viewport)) = (&self.surface, &self.viewport) {
-                if let Some(buffers) = &mut self.buffers {
-                    if let Some(found_buffer) = buffers
-                        .iter_mut()
-                        .find(|b| b.data as *mut c_void == event.buffer)
-                    {
-                        surface.attach(Some(&found_buffer.buffer), 0, 0);
-                        surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
-                        viewport.set_destination(self.width, self.height);
-                        found_buffer.in_use = true;
-                        surface.commit();
-                    } else {
-                        println!("No matching buffer found.");
-                    }
-                }
-            }
-        }
-
-        Ok(())
+    /// Returns the next available buffer from the buffer store
+    fn find_available_buffer(&self) -> Option<&Buffer> {
+        self.buffers.as_ref()?.iter().find(|b| !b.in_use)
     }
 
-    pub fn initialize_renderer(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let renderer = unsafe {
-            initialize_renderer(
-                self.width,
-                self.height,
-                get_qml_path(self.app_state).unwrap(),
-                self.app_state,
-            )
+    /// Searches for a `Buffer` matching the data provided by a `RendererEvent`
+    fn find_buffer_from_event(
+        &mut self,
+        event: &RendererEvent,
+    ) -> Result<&mut Buffer, Box<dyn std::error::Error>> {
+        let buffers = self.buffers.as_mut().ok_or("Buffers unavailable")?;
+
+        buffers
+            .iter_mut()
+            .find(|b| b.data as *mut c_void == event.buffer)
+            .ok_or("No matching buffer found".into())
+    }
+
+    /// Reads a single `RendererEvent` from the renderer event pipe
+    ///
+    /// This function reads a pointer to a `RendererEvent` from the renderer's file descriptor.
+    /// This event contains information about which buffer is ready to be displayed.
+    fn read_renderer_event(&self) -> Result<RendererEvent, Box<dyn std::error::Error>> {
+        let renderer_fd = self
+            .renderer_read_fd
+            .as_ref()
+            .ok_or("Renderer file descriptor not set")?;
+
+        let mut event_ptr = std::ptr::null_mut::<RendererEvent>();
+        let bytes_read = unsafe {
+            nix::unistd::read(
+                renderer_fd,
+                std::slice::from_raw_parts_mut(
+                    &mut event_ptr as *mut _ as *mut u8,
+                    std::mem::size_of::<*mut RendererEvent>(),
+                ),
+            )?
         };
 
-        if renderer != std::ptr::null_mut() {
-            set_renderer(self.app_state, renderer);
+        if bytes_read != std::mem::size_of::<*mut RendererEvent>() {
+            return Err(format!(
+                "Failed to read renderer event pipe, expected {} byets, got {}.",
+                std::mem::size_of::<*mut RendererEvent>(),
+                bytes_read
+            )
+            .into());
+        }
 
-            unsafe {
-                set_callbacks(
-                    renderer,
-                    Self::get_buffer_callback,
-                    self as *mut WaylandState as *mut c_void,
-                );
-            }
-        } else {
-            return Err("QML renderer initialization failed".into());
+        if event_ptr.is_null() {
+            return Err("Received NULL event pointer.".into());
+        }
+
+        Ok(unsafe { std::ptr::read(event_ptr) })
+    }
+
+    /// Retrieves the currently active surface and viewport
+    fn get_surface_and_viewport(
+        &self,
+    ) -> Result<(&WlSurface, &WpViewport), Box<dyn std::error::Error>> {
+        match (&self.surface, &self.viewport) {
+            (Some(surface), Some(viewport)) => Ok((surface, viewport)),
+            _ => Err("Surface or viewport unavailable".into()),
+        }
+    }
+
+    /// Updates a buffer associated with a renderer event
+    ///
+    /// This functions takes a `RendererEvent` object, and finds a `Buffer` associated with it.
+    /// This buffer is then attached to the currently active Wayland surface, and committed.
+    fn update_buffer(&mut self, event: &RendererEvent) -> Result<(), Box<dyn std::error::Error>> {
+        let width = self.width;
+        let height = self.height;
+
+        let (surface_ptr, viewport_ptr) = {
+            let (surface, viewport) = self.get_surface_and_viewport()?;
+            (surface as *const WlSurface, viewport as *const WpViewport)
+        };
+        let buffer = self.find_buffer_from_event(event)?;
+
+        let surface = unsafe { &*surface_ptr };
+        let viewport = unsafe { &*viewport_ptr };
+
+        surface.attach(Some(&buffer.buffer), 0, 0);
+        surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
+        viewport.set_destination(width, height);
+        buffer.in_use = true;
+        surface.commit();
+
+        Ok(())
+    }
+
+    /// Read and process a single renderer event from the renderer event pipe
+    pub unsafe fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let event = self.read_renderer_event()?;
+        self.update_buffer(&event)?;
+
+        Ok(())
+    }
+
+    /// Initialize the renderer
+    ///
+    /// This function creates a new `QmlRenderer` object with the appropriate callbacks set for rendering.
+    /// The QML content path is obtained from the current application state.
+    /// The created renderer is stored in the current application state.
+    pub fn initialize_renderer(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let qml_path = get_qml_path(self.app_state).ok_or("Failed to get QML path")?;
+
+        let renderer =
+            unsafe { initialize_renderer(self.width, self.height, qml_path, self.app_state) };
+
+        if renderer.is_null() {
+            return Err("QML renderer initialization failed.".into());
+        }
+
+        set_renderer(self.app_state, renderer);
+
+        unsafe {
+            set_callbacks(
+                renderer,
+                Self::get_buffer_callback,
+                self as *mut WaylandState as *mut c_void,
+            );
         }
 
         Ok(())
     }
 
+    /// Clean up the renderer object and thread
     pub fn destroy_renderer(&mut self) {
         if let Some(renderer) = get_renderer(self.app_state) {
             unsafe {
