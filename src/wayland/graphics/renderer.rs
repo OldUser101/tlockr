@@ -129,7 +129,7 @@ impl WaylandState {
     }
 
     /// Read and process a single renderer event from the renderer event pipe
-    pub unsafe fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let event = self.read_renderer_event()?;
         self.update_buffer(&event)?;
 
