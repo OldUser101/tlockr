@@ -32,6 +32,9 @@ use wayland_protocols::{
     wp::viewporter::client::{wp_viewport::WpViewport, wp_viewporter::WpViewporter},
 };
 
+/// Main state structure
+///
+/// Holds all state information for the application
 pub struct WaylandState {
     pub connection: Option<Connection>,
     pub display: Option<WlDisplay>,
@@ -68,6 +71,9 @@ pub struct WaylandState {
 }
 
 impl WaylandState {
+    /// Create a new `WaylandState`
+    ///
+    /// `initialize` needs to be called before the returned object is usable
     pub fn new(app_state: *mut ApplicationState) -> Self {
         Self {
             connection: None,
@@ -95,9 +101,8 @@ impl WaylandState {
         }
     }
 
-    pub fn create_and_bind(
-        &mut self,
-    ) -> Result<EventQueue<WaylandState>, Box<dyn std::error::Error>> {
+    /// Open a Wayland connection and bind to the display and registry
+    fn create_and_bind(&mut self) -> Result<EventQueue<WaylandState>, Box<dyn std::error::Error>> {
         let conn = Connection::connect_to_env()?;
         let display = conn.display();
 
@@ -113,10 +118,14 @@ impl WaylandState {
         Ok(event_queue)
     }
 
+    /// Returns a boolean value indicating whether this object instance is ready for use
     pub fn ready(&self) -> bool {
         return self.output_configured;
     }
 
+    /// Prepare the object for use
+    ///
+    /// This function establishes an `EventQueue` and prepares renderer communication.
     pub fn initialize(&mut self) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
         let event_queue = self.create_and_bind()?;
 
@@ -130,6 +139,7 @@ impl WaylandState {
         Ok(event_queue)
     }
 
+    /// Wrapper for an event queue roundtrip
     pub fn roundtrip(
         &mut self,
         event_queue: &mut EventQueue<Self>,
@@ -138,11 +148,14 @@ impl WaylandState {
         Ok(())
     }
 
+    /// Update and control the lock based on its current state
     pub fn update_states(
         &mut self,
         event_queue: &EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        match get_state(self.app_state).unwrap() {
+        match get_state(self.app_state)
+            .ok_or::<Box<dyn std::error::Error>>("Failed to get application state".into())?
+        {
             State::Initialized => {
                 if self.ready() {
                     set_state(self.app_state, State::Ready);

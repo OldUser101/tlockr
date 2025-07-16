@@ -17,6 +17,11 @@ use wayland_protocols::ext::session_lock::v1::client::{
 };
 
 impl WaylandState {
+    /// Try to lock the screen using the `ext_session_lock_v1` protocol
+    ///
+    /// This function creates a surface to use as a lock surface.
+    /// Using the lock manager obtained bound from the registry, lock the screen.
+    /// The surface is then set as a lock surface by various dispatch functions.
     pub fn lock(
         &mut self,
         event_queue: &EventQueue<Self>,
