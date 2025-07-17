@@ -1,16 +1,24 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
+
+/*
+    manager.rs:
+        Provides the `BufferManager` structure for alloocating and using pixel buffers.
+*/
+
+use crate::shared::ffi::RendererEvent;
+use crate::wayland::state::WaylandState;
 use std::os::raw::c_void;
 use wayland_client::protocol::wl_buffer;
 use wayland_client::protocol::{wl_buffer::WlBuffer, wl_shm::WlShm};
 use wayland_client::{Connection, Dispatch, QueueHandle};
-use crate::shared::ffi::RendererEvent;
-use crate::wayland::state::WaylandState;
 
 /// Represents a buffer for storing pixel data
-/// 
+///
 /// This structure contains a `WlBuffer` object for use in Wayland contexts,
 /// as well as a raw pointer to the buffer's memory for use in external rendering
-/// code. 
-/// 
+/// code.
+///
 /// The `in_use` member is a boolean value that dictates whether the buffer is currently
 /// being used by the Wayland compositor. If this is set to `true`, the buffer's data
 /// should not be modified, as this violates Wayland protocol.
@@ -21,9 +29,9 @@ pub struct Buffer {
 }
 
 /// `BufferManager` is a structure that can be used for allocating `Buffer` objects.
-/// 
+///
 /// This structure contains various functions for operating on these buffers.
-/// 
+///
 /// The `width`, `height`, and `shm` members need to be set before this structure is
 /// ready to allocate buffers. This can be done via the `set_output_dimensions` and
 /// `set_shm` methods respectively.
@@ -36,7 +44,7 @@ pub struct BufferManager {
 
 impl BufferManager {
     /// Create a new `BufferManager`, with the buffers array initialized
-    /// 
+    ///
     /// `set_output_dimensions` and `set_shm` need to be used before the `BufferManager` object is
     /// ready to allocate buffers.
     pub fn new() -> Self {
@@ -73,7 +81,7 @@ impl BufferManager {
     }
 
     /// Release a buffer by index
-    /// 
+    ///
     /// This function sets the `in_use` member of the buffer specified by `index` to `false`.
     /// This function is intended to be used after receiving the `wl_buffer::Event::Release` event,
     /// signalling that the specified buffer has been released.
