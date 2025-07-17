@@ -43,7 +43,7 @@ impl Dispatch<WlRegistry, ()> for WaylandState {
                 }
                 "wl_shm" => {
                     let shm = registry.bind::<WlShm, _, _>(name, version, qh, ());
-                    state.shm = Some(shm);
+                    state.buffer_manager.set_shm(shm);
                 }
                 "wl_compositor" => {
                     let compositor = registry.bind::<WlCompositor, _, _>(name, version, qh, ());

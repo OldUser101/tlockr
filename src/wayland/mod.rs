@@ -1,3 +1,4 @@
+pub mod buffer;
 mod empty;
 pub mod event;
 pub mod graphics;

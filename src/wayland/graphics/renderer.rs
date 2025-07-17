@@ -15,7 +15,7 @@ use crate::{
         ffi::{RendererEvent, cleanup_renderer, initialize_renderer, set_callbacks},
         interface::{get_qml_path, get_renderer, set_renderer},
     },
-    wayland::{graphics::buffer::Buffer, state::WaylandState},
+    wayland::{buffer::manager::BufferManager, state::WaylandState},
 };
 use std::{ffi::c_void, i32};
 
@@ -25,34 +25,14 @@ impl WaylandState {
     /// This functions returns a pointer to the next available buffer.
     /// This tells the renderer where to render its content.
     unsafe extern "C" fn get_buffer_callback(user_data: *mut c_void) -> *mut c_void {
-        if user_data.is_null() {
-            return std::ptr::null_mut();
+        let buffer_manager = user_data as *mut BufferManager;
+        unsafe {
+            buffer_manager
+                .as_ref()
+                .and_then(|bm| bm.find_available_buffer())
+                .map(|b| b.data as *mut c_void)
+                .unwrap_or(std::ptr::null_mut())
         }
-
-        let state = unsafe { &*(user_data as *const WaylandState) };
-
-        state
-            .find_available_buffer()
-            .map(|b| b.data as *mut c_void)
-            .unwrap_or(std::ptr::null_mut())
-    }
-
-    /// Returns the next available buffer from the buffer store
-    fn find_available_buffer(&self) -> Option<&Buffer> {
-        self.buffers.as_ref()?.iter().find(|b| !b.in_use)
-    }
-
-    /// Searches for a `Buffer` matching the data provided by a `RendererEvent`
-    fn find_buffer_from_event(
-        &mut self,
-        event: &RendererEvent,
-    ) -> Result<&mut Buffer, Box<dyn std::error::Error>> {
-        let buffers = self.buffers.as_mut().ok_or("Buffers unavailable")?;
-
-        buffers
-            .iter_mut()
-            .find(|b| b.data as *mut c_void == event.buffer)
-            .ok_or("No matching buffer found".into())
     }
 
     /// Reads a single `RendererEvent` from the renderer event pipe
@@ -114,7 +94,7 @@ impl WaylandState {
             let (surface, viewport) = self.get_surface_and_viewport()?;
             (surface as *const WlSurface, viewport as *const WpViewport)
         };
-        let buffer = self.find_buffer_from_event(event)?;
+        let buffer = self.buffer_manager.find_buffer_from_event(event)?;
 
         let surface = unsafe { &*surface_ptr };
         let viewport = unsafe { &*viewport_ptr };
@@ -157,7 +137,7 @@ impl WaylandState {
             set_callbacks(
                 renderer,
                 Self::get_buffer_callback,
-                self as *mut WaylandState as *mut c_void,
+                &mut self.buffer_manager as *mut _ as *mut c_void,
             );
         }
 

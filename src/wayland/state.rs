@@ -9,18 +9,15 @@
 
 use crate::shared::interface::{get_state, set_renderer_fd};
 use crate::shared::{interface::set_state, state::State};
-use crate::{
-    shared::state::ApplicationState,
-    wayland::{graphics::buffer::Buffer, input::keyboard::KeyboardMapping},
-};
+use crate::wayland::buffer::manager::BufferManager;
+use crate::{shared::state::ApplicationState, wayland::input::keyboard::KeyboardMapping};
 use std::os::fd::{AsRawFd, OwnedFd};
 use wayland_client::EventQueue;
 use wayland_client::{
     Connection,
     protocol::{
         wl_compositor::WlCompositor, wl_display::WlDisplay, wl_keyboard::WlKeyboard,
-        wl_output::WlOutput, wl_registry::WlRegistry, wl_seat::WlSeat, wl_shm::WlShm,
-        wl_surface::WlSurface,
+        wl_output::WlOutput, wl_registry::WlRegistry, wl_seat::WlSeat, wl_surface::WlSurface,
     },
 };
 use wayland_protocols::{
@@ -47,6 +44,8 @@ pub struct WaylandState {
 
     pub surface: Option<WlSurface>,
 
+    pub buffer_manager: BufferManager,
+
     pub session_lock_manager: Option<ExtSessionLockManagerV1>,
     pub session_lock: Option<ExtSessionLockV1>,
     pub session_lock_surface: Option<ExtSessionLockSurfaceV1>,
@@ -54,8 +53,6 @@ pub struct WaylandState {
     pub keyboard: Option<WlKeyboard>,
 
     pub keymap: Option<KeyboardMapping>,
-    pub buffers: Option<Vec<Buffer>>,
-    pub shm: Option<WlShm>,
 
     pub viewport: Option<WpViewport>,
 
@@ -84,13 +81,12 @@ impl WaylandState {
             seat: None,
             viewporter: None,
             surface: None,
+            buffer_manager: BufferManager::new(),
             session_lock_manager: None,
             session_lock: None,
             session_lock_surface: None,
             keyboard: None,
             keymap: None,
-            buffers: Some(Vec::new()),
-            shm: None,
             viewport: None,
             width: -1,
             height: -1,
@@ -162,7 +158,9 @@ impl WaylandState {
                 }
             }
             State::Ready => {
-                self.allocate_buffers(event_queue, 2)?;
+                self.buffer_manager
+                    .set_output_dimensions(self.width, self.height);
+                self.buffer_manager.allocate_buffers(event_queue, 2)?;
                 self.initialize_renderer()?;
                 self.lock(event_queue)?;
             }
