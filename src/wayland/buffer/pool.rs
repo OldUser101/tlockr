@@ -2,34 +2,27 @@
 // Copyright (C) 2025, Nathan Gill
 
 /*
-    buffer.rs:
-        Buffer allocation and management for the renderer.
+    pool.rs:
+        Contains operations relating to memory allocation for `BufferManager`
 */
 
+use crate::wayland::buffer::manager::{Buffer, BufferManager};
 use crate::wayland::state::WaylandState;
 use nix::libc::{MAP_SHARED, PROT_READ, PROT_WRITE, ftruncate, mmap};
 use nix::sys::memfd::{MFdFlags, memfd_create};
-use std::os::fd::{AsFd, AsRawFd, OwnedFd, RawFd};
-use std::os::raw::c_void;
-use wayland_client::EventQueue;
+use std::os::{
+    fd::{AsFd, AsRawFd, OwnedFd, RawFd},
+    raw::c_void,
+};
 use wayland_client::protocol::wl_shm;
 use wayland_client::protocol::wl_shm_pool::WlShmPool;
-use wayland_client::{
-    Connection, Dispatch, QueueHandle,
-    protocol::wl_buffer::{self, WlBuffer},
-};
+use wayland_client::{EventQueue, QueueHandle};
 
-pub struct Buffer {
-    pub buffer: WlBuffer,
-    pub in_use: bool,
-    pub data: *mut u8,
-}
-
-impl WaylandState {
+impl BufferManager {
     /// Safe wrapper for `mmap`
     ///
     /// The return value is a pointer to the memory-mapped region
-    pub fn map_file(
+    fn map_file(
         &self,
         len: usize,
         prot: i32,
@@ -65,7 +58,7 @@ impl WaylandState {
     fn allocate_buffer(
         &mut self,
         pool: &WlShmPool,
-        qh: &QueueHandle<Self>,
+        qh: &QueueHandle<WaylandState>,
         data_ptr: *mut c_void,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let (width, height, stride, _) = self.calculate_buffer_dimensions()?;
@@ -96,25 +89,12 @@ impl WaylandState {
         Ok(())
     }
 
-    /// This function returns the dimensions of a display buffer in the format `(width, height, stride, size)`.
-    fn calculate_buffer_dimensions(
-        &self,
-    ) -> Result<(i32, i32, i32, i32), Box<dyn std::error::Error>> {
-        if self.width < 0 || self.height < 0 {
-            return Err("Invalid width or height".into());
-        }
-
-        let stride = self.width * 4;
-
-        Ok((self.width, self.height, stride, self.height * stride))
-    }
-
     /// Create a new pool and allocate `n` buffers in it
     ///
     /// The allocated buffers are stored in the buffer store
     pub fn allocate_buffers(
         &mut self,
-        event_queue: &EventQueue<Self>,
+        event_queue: &EventQueue<WaylandState>,
         n: i32,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let (_, _, _, buffer_size) = self.calculate_buffer_dimensions()?;
@@ -146,26 +126,5 @@ impl WaylandState {
         println!("Allocated {} buffers: {} bytes", n, size);
 
         Ok(())
-    }
-}
-
-impl Dispatch<WlBuffer, i32> for WaylandState {
-    fn event(
-        state: &mut Self,
-        _proxy: &WlBuffer,
-        event: <WlBuffer as wayland_client::Proxy>::Event,
-        data: &i32,
-        _conn: &Connection,
-        _qh: &QueueHandle<Self>,
-    ) {
-        match event {
-            wl_buffer::Event::Release => {
-                // When a buffer is released, mark it as available for use in the store
-                if let Some(buffers) = state.buffers.as_mut() {
-                    buffers[*data as usize].in_use = false;
-                }
-            }
-            _ => {}
-        }
     }
 }
