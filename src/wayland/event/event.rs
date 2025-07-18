@@ -8,38 +8,14 @@
 */
 
 use crate::shared::{interface::get_state, state::State};
+use crate::wayland::communication::epoll::EpollMonitorable;
+use crate::wayland::communication::event::EventType;
 use crate::wayland::state::WaylandState;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use std::os::fd::BorrowedFd;
 use std::os::fd::{AsRawFd, RawFd};
 use wayland_client::EventQueue;
 use wayland_client::backend::ReadEventsGuard;
-
-const WAYLAND_EVENT_TAG: u64 = 0;
-const RENDERER_EVENT_TAG: u64 = 1;
-
-/// Enum for event tags used in the `epoll` event loop
-enum EventType {
-    Wayland,
-    Renderer,
-    Unknown(u64),
-}
-
-impl From<u64> for EventType {
-    /// Return a new `EventType` object from a `u64`
-    ///
-    /// - A value of `0` corresponds to `EventType::Wayland`
-    /// - A value of `1` corresponds to `EventType::Renderer`
-    ///
-    /// Any other value corresponds to `EventType::Unknown(tag)`
-    fn from(tag: u64) -> Self {
-        match tag {
-            WAYLAND_EVENT_TAG => EventType::Wayland,
-            RENDERER_EVENT_TAG => EventType::Renderer,
-            other => EventType::Unknown(other),
-        }
-    }
-}
 
 /// Event loop structure to hold values used as part of the event loop
 ///
@@ -61,7 +37,7 @@ impl EventLoop {
         let events = [EpollEvent::empty(); 10];
         let renderer_fd = unsafe { BorrowedFd::borrow_raw(renderer_fd) };
 
-        let renderer_event = EpollEvent::new(EpollFlags::EPOLLIN, RENDERER_EVENT_TAG);
+        let renderer_event = EpollEvent::new(EpollFlags::EPOLLIN, EventType::Renderer as u64);
         epoll.add(renderer_fd, renderer_event)?;
 
         Ok(Self {
@@ -105,15 +81,13 @@ impl WaylandState {
         let mut wayland_event_received = false;
 
         for event in &events[..num_events] {
-            match EventType::from(event.data()) {
+            let event_type = EventType::try_from(event.data() as u32)?;
+            match event_type {
                 EventType::Wayland => {
                     wayland_event_received = true;
                 }
-                EventType::Renderer => {
-                    self.handle_renderer_event()?;
-                }
-                EventType::Unknown(tag) => {
-                    println!("Received unknown event: {}", tag);
+                _ => {
+                    self.comm_manager.handle_event(event_type)?;
                 }
             }
         }
@@ -145,7 +119,7 @@ impl WaylandState {
         event_queue: &mut EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let wayland_fd = read_guard.connection_fd();
-        let wayland_event = EpollEvent::new(EpollFlags::EPOLLIN, WAYLAND_EVENT_TAG);
+        let wayland_event = EpollEvent::new(EpollFlags::EPOLLIN, EventType::Wayland as u64);
 
         event_loop.epoll.add(wayland_fd, wayland_event)?;
 

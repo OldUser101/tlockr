@@ -12,10 +12,17 @@ use wayland_protocols::wp::viewporter::client::wp_viewport::WpViewport;
 
 use crate::{
     shared::{
-        ffi::{RendererEvent, cleanup_renderer, initialize_renderer, set_callbacks},
+        ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
         interface::{get_qml_path, get_renderer, set_renderer},
     },
-    wayland::{buffer::manager::BufferManager, state::WaylandState},
+    wayland::{
+        buffer::manager::BufferManager,
+        communication::{
+            event::{Event, EventType},
+            handler::EventHandler,
+        },
+        state::WaylandState,
+    },
 };
 use std::{ffi::c_void, i32};
 
@@ -35,43 +42,6 @@ impl WaylandState {
         }
     }
 
-    /// Reads a single `RendererEvent` from the renderer event pipe
-    ///
-    /// This function reads a pointer to a `RendererEvent` from the renderer's file descriptor.
-    /// This event contains information about which buffer is ready to be displayed.
-    fn read_renderer_event(&self) -> Result<RendererEvent, Box<dyn std::error::Error>> {
-        let renderer_fd = self
-            .renderer_read_fd
-            .as_ref()
-            .ok_or("Renderer file descriptor not set")?;
-
-        let mut event_ptr = std::ptr::null_mut::<RendererEvent>();
-        let bytes_read = unsafe {
-            nix::unistd::read(
-                renderer_fd,
-                std::slice::from_raw_parts_mut(
-                    &mut event_ptr as *mut _ as *mut u8,
-                    std::mem::size_of::<*mut RendererEvent>(),
-                ),
-            )?
-        };
-
-        if bytes_read != std::mem::size_of::<*mut RendererEvent>() {
-            return Err(format!(
-                "Failed to read renderer event pipe, expected {} byets, got {}.",
-                std::mem::size_of::<*mut RendererEvent>(),
-                bytes_read
-            )
-            .into());
-        }
-
-        if event_ptr.is_null() {
-            return Err("Received NULL event pointer.".into());
-        }
-
-        Ok(unsafe { std::ptr::read(event_ptr) })
-    }
-
     /// Retrieves the currently active surface and viewport
     fn get_surface_and_viewport(
         &self,
@@ -86,7 +56,7 @@ impl WaylandState {
     ///
     /// This functions takes a `RendererEvent` object, and finds a `Buffer` associated with it.
     /// This buffer is then attached to the currently active Wayland surface, and committed.
-    fn update_buffer(&mut self, event: &RendererEvent) -> Result<(), Box<dyn std::error::Error>> {
+    fn update_buffer(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         let width = self.width;
         let height = self.height;
 
@@ -104,14 +74,6 @@ impl WaylandState {
         viewport.set_destination(width, height);
         buffer.in_use = true;
         surface.commit();
-
-        Ok(())
-    }
-
-    /// Read and process a single renderer event from the renderer event pipe
-    pub fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let event = self.read_renderer_event()?;
-        self.update_buffer(&event)?;
 
         Ok(())
     }
@@ -152,5 +114,16 @@ impl WaylandState {
                 set_renderer(self.app_state, std::ptr::null_mut());
             }
         }
+    }
+}
+
+impl EventHandler for &mut WaylandState {
+    fn event_type(&self) -> EventType {
+        EventType::Renderer
+    }
+
+    fn handle_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
+        self.update_buffer(event)?;
+        Ok(())
     }
 }

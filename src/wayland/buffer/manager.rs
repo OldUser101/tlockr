@@ -6,7 +6,7 @@
         Provides the `BufferManager` structure for alloocating and using pixel buffers.
 */
 
-use crate::shared::ffi::RendererEvent;
+use crate::wayland::communication::event::Event;
 use crate::wayland::state::WaylandState;
 use std::os::raw::c_void;
 use wayland_client::protocol::wl_buffer;
@@ -108,13 +108,13 @@ impl BufferManager {
     /// Searches for a `Buffer` matching the data provided by a `RendererEvent`
     pub fn find_buffer_from_event(
         &mut self,
-        event: &RendererEvent,
+        event: &Event,
     ) -> Result<&mut Buffer, Box<dyn std::error::Error>> {
         let buffers = self.buffers.as_mut().ok_or("Buffers unavailable")?;
 
         buffers
             .iter_mut()
-            .find(|b| b.data as *mut c_void == event.buffer)
+            .find(|b| b.data as *mut c_void == event.param_1.into())
             .ok_or("No matching buffer found".into())
     }
 }
