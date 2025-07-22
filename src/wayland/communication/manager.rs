@@ -4,7 +4,6 @@ use nix::sys::epoll::EpollFlags;
 
 use crate::wayland::communication::{
     channel::CommunicationChannel,
-    epoll::EpollMonitorable,
     event::{Event, EventType},
     handler::EventHandler,
     param::EventParam,
@@ -90,10 +89,8 @@ impl CommunicationManager {
 
         Ok(event)
     }
-}
 
-impl EpollMonitorable for CommunicationManager {
-    fn get_fds(&self) -> Vec<(RawFd, EpollFlags, u64)> {
+    pub fn get_fds(&self) -> Vec<(RawFd, EpollFlags, u64)> {
         self.channels
             .iter()
             .map(|(event_type, channel)| {
@@ -105,7 +102,10 @@ impl EpollMonitorable for CommunicationManager {
             .collect()
     }
 
-    fn handle_event(&mut self, event_type: EventType) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn handle_event(
+        &mut self,
+        event_type: EventType,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let event = self.receive_event(event_type)?;
         self.dispatch_event(event)?;
         Ok(())

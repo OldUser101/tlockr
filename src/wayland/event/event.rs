@@ -8,7 +8,6 @@
 */
 
 use crate::shared::{interface::get_state, state::State};
-use crate::wayland::communication::epoll::EpollMonitorable;
 use crate::wayland::communication::event::EventType;
 use crate::wayland::state::WaylandState;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
