@@ -31,7 +31,7 @@ impl CommunicationManager {
         &mut self,
         event_type: EventType,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let channel = CommunicationChannel::new(event_type)?;
+        let channel = CommunicationChannel::new()?;
         self.channels.insert(event_type, channel);
         Ok(())
     }
