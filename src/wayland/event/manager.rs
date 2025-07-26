@@ -9,8 +9,8 @@ use crate::wayland::{
 };
 
 pub struct EventManager<'a> {
-    comm_manager: Option<&'a CommunicationManager>,
-    event_handlers: HashMap<EventType, Box<dyn EventHandler>>,
+    pub comm_manager: Option<&'a CommunicationManager>,
+    pub event_handlers: HashMap<EventType, Box<dyn EventHandler>>,
 }
 
 impl<'a> EventManager<'a> {

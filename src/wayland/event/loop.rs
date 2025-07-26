@@ -7,6 +7,7 @@
         and from an EventFd, used for signals from the renderer, via epoll.
 */
 
+use crate::shared::state::ApplicationState;
 use crate::shared::{interface::get_state, state::State};
 use crate::wayland::communication::manager::CommunicationManager;
 use crate::wayland::event::event::EventType;
@@ -94,8 +95,11 @@ impl Drop for EpollCleanupGuard<'_> {
 
 impl<'a> EventManager<'a> {
     /// This function returns a boolean value indicating whether the event loop should continue running
-    fn continue_running(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        Ok(get_state(self.app_state)
+    fn continue_running(
+        &self,
+        app_state: *mut ApplicationState,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
+        Ok(get_state(app_state)
             .ok_or::<Box<dyn std::error::Error>>("Failed to read app state".into())?
             != State::Unlocked)
     }
@@ -103,11 +107,13 @@ impl<'a> EventManager<'a> {
     fn dispatch_events(
         &mut self,
         event_loop: &mut EventLoopState,
-        event_handlers: &mut HashMap<EventType, Box<dyn EventHandler>>,
-        comm_manager: &CommunicationManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut cleanup_guard =
-            event_loop.register_file_descriptors(comm_manager, event_handlers)?;
+        let mut cleanup_guard = event_loop.register_file_descriptors(
+            self.comm_manager
+                .as_ref()
+                .ok_or::<Box<dyn std::error::Error>>("".into())?,
+            &mut self.event_handlers,
+        )?;
 
         let num_events = cleanup_guard.wait()?;
 
@@ -116,7 +122,7 @@ impl<'a> EventManager<'a> {
         for event in &event_loop.events[..num_events] {
             let event_type = EventType::try_from(event.data() as u32)?;
 
-            if let Some(handler) = event_handlers.get_mut(&event_type) {
+            if let Some(handler) = self.event_handlers.get_mut(&event_type) {
                 handler.notify_event();
             }
         }
@@ -126,13 +132,12 @@ impl<'a> EventManager<'a> {
 
     pub fn run_event_loop(
         &mut self,
-        event_handlers: &mut HashMap<EventType, Box<dyn EventHandler>>,
-        comm_manager: &CommunicationManager,
+        app_state: *mut ApplicationState,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut event_loop = EventLoopState::new()?;
 
-        while self.continue_running()? {
-            self.dispatch_events(&mut event_loop, event_handlers, comm_manager)?;
+        while self.continue_running(app_state)? {
+            self.dispatch_events(&mut event_loop)?;
         }
 
         Ok(())
