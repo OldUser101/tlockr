@@ -49,7 +49,7 @@ impl WaylandState {
     ///
     /// This functions takes a `RendererEvent` object, and finds a `Buffer` associated with it.
     /// This buffer is then attached to the currently active Wayland surface, and committed.
-    fn update_buffer(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update_buffer(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         let width = self.width;
         let height = self.height;
 

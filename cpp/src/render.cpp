@@ -32,6 +32,8 @@
 #include <atomic>
 #include <chrono>
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -42,9 +44,12 @@ extern "C"
 	typedef void *(*RsGetBufferCallback)(void *user_data);
 	typedef void (*RsFrameReadyCallback)(void *user_data, void *buffer);
 
-	struct RsFrameRenderedEvent
+	struct RsEvent
 	{
-		void *buf;
+		uint32_t serial;
+		uint32_t event_type;
+		uint64_t param_1;
+		uint64_t param_2;
 	};
 
 	struct ApplicationState
@@ -85,7 +90,7 @@ extern "C"
 		ApplicationState *appState;
 	};
 
-	static RsFrameRenderedEvent frameRenderedEvent = {0};
+	static RsEvent frameRenderedEvent = {0};
 
 	QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath, ApplicationState *appState)
 	{
@@ -129,10 +134,24 @@ extern "C"
 		return 0;
 	}
 
+	int write_event_to_pipe(int fd, const RsEvent *event)
+	{
+		ssize_t res = write(fd, event, sizeof(RsEvent));
+		if (res != sizeof(RsEvent))
+		{
+			std::cerr << "Failed to write to event pipe" << std::endl;
+			return -1;
+		}
+		return 0;
+	}
+
 	void send_frame_rendered_event(QmlRenderer *renderer, void *buf)
 	{
-		frameRenderedEvent.buf = buf;
-		write_eventfd_notification(renderer->appState->rendererFd, &frameRenderedEvent);
+		frameRenderedEvent.serial = 0;
+		frameRenderedEvent.event_type = 1;
+		frameRenderedEvent.param_1 = (uint64_t)buf;
+		frameRenderedEvent.param_2 = 0;
+		write_event_to_pipe(renderer->appState->rendererFd, &frameRenderedEvent);
 	}
 
 	void setup_renderer(QmlRenderer *renderer)

@@ -51,6 +51,12 @@ impl EventLoopState {
         for (event_type, event_handler) in event_handlers.iter_mut() {
             if let Some(fd) = event_handler.get_file_descriptor(Some(comm_manager)) {
                 let raw_fd = fd.as_raw_fd();
+
+                if raw_fd < 0 {
+                    println!("Invalid FD {} for {:?}", raw_fd, event_type);
+                    continue;
+                }
+
                 let event = EpollEvent::new(EpollFlags::EPOLLIN, *event_type as u64);
                 self.epoll.add(fd, event)?;
                 registered_fds.push((*event_type, raw_fd));

@@ -16,7 +16,7 @@ use crate::{
     shared::state::ApplicationState,
     wayland::{
         communication::manager::CommunicationManager, event::manager::EventManager,
-        state::WaylandState, wrappers::WaylandStateHandler,
+        graphics::wrapper::RendererHandler, state::WaylandState, wrappers::WaylandStateHandler,
     },
 };
 
@@ -42,6 +42,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let wayland_handler = WaylandStateHandler::new(&mut state, &mut event_queue);
     event_manager.register_handler(wayland_handler);
+
+    let renderer_handler = RendererHandler::new(&mut state);
+    event_manager.register_handler(renderer_handler);
 
     state.roundtrip(&mut event_queue)?;
 
