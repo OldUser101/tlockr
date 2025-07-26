@@ -8,19 +8,10 @@
 
 use std::os::fd::BorrowedFd;
 
-use crate::wayland::{
-    communication::manager::CommunicationManager,
-    event::event::{Event, EventType},
-};
+use crate::wayland::{communication::manager::CommunicationManager, event::event::EventType};
 
 /// Trait for objects that handle communication events
 pub trait EventHandler {
-    /// Process the given event
-    ///
-    /// The event object parsed to this function will be of the correct `EventType`,
-    /// as specified by `event_type`.
-    fn handle_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>>;
-
     /// This function is called when a new event is available for this handler.
     ///
     /// The event can be read from the file descriptor that was returned by

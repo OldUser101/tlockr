@@ -93,7 +93,7 @@ impl Drop for EpollCleanupGuard<'_> {
     }
 }
 
-impl<'a> EventManager<'a> {
+impl EventManager {
     /// This function returns a boolean value indicating whether the event loop should continue running
     fn continue_running(
         &self,
@@ -108,12 +108,8 @@ impl<'a> EventManager<'a> {
         &mut self,
         event_loop: &mut EventLoopState,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut cleanup_guard = event_loop.register_file_descriptors(
-            self.comm_manager
-                .as_ref()
-                .ok_or::<Box<dyn std::error::Error>>("".into())?,
-            &mut self.event_handlers,
-        )?;
+        let mut cleanup_guard =
+            event_loop.register_file_descriptors(&self.comm_manager, &mut self.event_handlers)?;
 
         let num_events = cleanup_guard.wait()?;
 
@@ -123,7 +119,7 @@ impl<'a> EventManager<'a> {
             let event_type = EventType::try_from(event.data() as u32)?;
 
             if let Some(handler) = self.event_handlers.get_mut(&event_type) {
-                handler.notify_event();
+                handler.notify_event()?;
             }
         }
 

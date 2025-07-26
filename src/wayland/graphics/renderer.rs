@@ -15,14 +15,7 @@ use crate::{
         ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
         interface::{get_qml_path, get_renderer, set_renderer},
     },
-    wayland::{
-        buffer::manager::BufferManager,
-        event::{
-            event::{Event, EventType},
-            handler::EventHandler,
-        },
-        state::WaylandState,
-    },
+    wayland::{buffer::manager::BufferManager, event::event::Event, state::WaylandState},
 };
 use std::{ffi::c_void, i32};
 
@@ -114,16 +107,5 @@ impl WaylandState {
                 set_renderer(self.app_state, std::ptr::null_mut());
             }
         }
-    }
-}
-
-impl EventHandler for &mut WaylandState {
-    fn event_type(&self) -> EventType {
-        EventType::Renderer
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
-        self.update_buffer(event)?;
-        Ok(())
     }
 }

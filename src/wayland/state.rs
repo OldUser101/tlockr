@@ -11,8 +11,10 @@ use crate::shared::interface::{get_state, set_renderer_fd};
 use crate::shared::{interface::set_state, state::State};
 use crate::wayland::buffer::manager::BufferManager;
 use crate::wayland::communication::manager::CommunicationManager;
+use crate::wayland::event::event::EventType;
+use crate::wayland::event::manager::EventManager;
 use crate::{shared::state::ApplicationState, wayland::input::keyboard::KeyboardMapping};
-use std::os::fd::{AsRawFd, OwnedFd};
+use std::os::fd::RawFd;
 use wayland_client::EventQueue;
 use wayland_client::{
     Connection,
@@ -65,8 +67,8 @@ pub struct WaylandState {
 
     pub app_state: *mut ApplicationState,
 
-    pub renderer_read_fd: Option<OwnedFd>,
-    pub renderer_write_fd: Option<OwnedFd>,
+    pub renderer_read_fd: Option<RawFd>,
+    pub renderer_write_fd: Option<RawFd>,
 }
 
 impl WaylandState {
@@ -125,15 +127,27 @@ impl WaylandState {
     /// Prepare the object for use
     ///
     /// This function establishes an `EventQueue` and prepares renderer communication.
-    pub fn initialize(&mut self) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
+    pub fn initialize(
+        &mut self,
+        event_manager: &mut EventManager,
+    ) -> Result<EventQueue<Self>, Box<dyn std::error::Error>> {
         let event_queue = self.create_and_bind()?;
 
         set_state(self.app_state, State::Initialized);
 
-        let (renderer_read_fd, renderer_write_fd) = nix::unistd::pipe()?;
-        set_renderer_fd(self.app_state, renderer_write_fd.as_raw_fd());
-        self.renderer_read_fd = Some(renderer_read_fd);
-        self.renderer_write_fd = Some(renderer_write_fd);
+        event_manager
+            .comm_manager
+            .create_channel(EventType::Renderer)?;
+
+        let channel = event_manager
+            .comm_manager
+            .get_channel(EventType::Renderer)
+            .ok_or::<Box<dyn std::error::Error>>("Failed to get communication channel".into())?;
+
+        set_renderer_fd(self.app_state, channel.write_fd_raw());
+
+        self.renderer_read_fd = Some(channel.read_fd_raw());
+        self.renderer_write_fd = Some(channel.write_fd_raw());
 
         Ok(event_queue)
     }

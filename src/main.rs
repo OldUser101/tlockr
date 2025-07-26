@@ -16,7 +16,7 @@ use crate::{
     shared::state::ApplicationState,
     wayland::{
         communication::manager::CommunicationManager, event::manager::EventManager,
-        state::WaylandState,
+        state::WaylandState, wrappers::WaylandStateHandler,
     },
 };
 
@@ -35,10 +35,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut app_state = ApplicationState::new(qml_path_raw);
     let comm_manager = CommunicationManager::new();
-    let mut event_manager = EventManager::new(&comm_manager);
+    let mut event_manager = EventManager::new(comm_manager);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
 
-    let mut event_queue = state.initialize()?;
+    let mut event_queue = state.initialize(&mut event_manager)?;
+
+    let wayland_handler = WaylandStateHandler::new(&mut state, &mut event_queue);
+    event_manager.register_handler(wayland_handler);
 
     state.roundtrip(&mut event_queue)?;
 
