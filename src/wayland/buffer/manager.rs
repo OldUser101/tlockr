@@ -6,7 +6,7 @@
         Provides the `BufferManager` structure for alloocating and using pixel buffers.
 */
 
-use crate::wayland::communication::event::Event;
+use crate::wayland::event::event::Event;
 use crate::wayland::state::WaylandState;
 use std::os::raw::c_void;
 use wayland_client::protocol::wl_buffer;

@@ -17,7 +17,7 @@ use crate::{
     },
     wayland::{
         buffer::manager::BufferManager,
-        communication::{
+        event::{
             event::{Event, EventType},
             handler::EventHandler,
         },

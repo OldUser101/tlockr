@@ -9,7 +9,7 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
 /// Serial counter value
-static SERIAL_COUNTER: AtomicU32 = AtomicU32::new(1);
+static SERIAL_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 /// Get the next value from the atomic counter
 ///

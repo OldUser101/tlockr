@@ -6,8 +6,7 @@
         Pipe abstraction for one-way communication between threads.
 */
 
-use crate::wayland::communication::event::Event;
-use crate::wayland::communication::pipe::Pipe;
+use crate::wayland::{communication::pipe::Pipe, event::event::Event};
 use std::os::fd::{AsRawFd, RawFd};
 
 /// This structure represents a one-way communication channel using a pipe
