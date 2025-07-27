@@ -2,9 +2,9 @@
 // Copyright (C) 2025, Nathan Gill
 
 /*
-    event.rs:
-        Contains event loops that handle both Wayland events from an EventQueue
-        and from an EventFd, used for signals from the renderer, via epoll.
+    loop.rs:
+        Event loop and state that is used to periodically dispatch events from
+        various sources.
 */
 
 use crate::shared::state::ApplicationState;
@@ -38,6 +38,10 @@ impl EventLoopState {
         Ok(Self { epoll, events })
     }
 
+    /// Register the file descriptors of all `event_handlers` with an `Epoll`
+    ///
+    /// This function returns an `EpollCleanupGuard`, which handles the
+    /// lifetime of all file descriptors and events registered with it.
     pub fn register_file_descriptors<'a>(
         &'a mut self,
         comm_manager: &CommunicationManager,
@@ -71,6 +75,10 @@ impl EventLoopState {
     }
 }
 
+/// Cleanup guard for managing events registered with `Epoll`
+///
+/// This structure holds the entire event loop state, and handles event removal
+/// when dropped. Event handlers are also signalled via `cleanup_handler`.
 struct EpollCleanupGuard<'a> {
     event_loop: &'a mut EventLoopState,
     registered_fds: Vec<(EventType, RawFd)>,
@@ -78,6 +86,15 @@ struct EpollCleanupGuard<'a> {
 }
 
 impl<'a> EpollCleanupGuard<'a> {
+    /// Wait for events to be received
+    ///
+    /// This method returns the number of events received. The event data
+    /// can be accessed through the original `EventLoopState` that created
+    /// this object.
+    ///
+    /// After this method is called, this object **must** be dropped to allow
+    /// events to be read from the `EventLoopState`, whose ownership was
+    /// previously transferred to this object.
     pub fn wait(&mut self) -> Result<usize, Box<dyn std::error::Error>> {
         Ok(self
             .event_loop
@@ -87,6 +104,7 @@ impl<'a> EpollCleanupGuard<'a> {
 }
 
 impl Drop for EpollCleanupGuard<'_> {
+    /// Drop this object, releasing all file descriptors and signalling handlers
     fn drop(&mut self) {
         for (_, raw_fd) in &self.registered_fds {
             let fd = unsafe { BorrowedFd::borrow_raw(*raw_fd) };
@@ -110,6 +128,12 @@ impl EventManager {
             != State::Unlocked)
     }
 
+    /// Wait for, and dispatch, events through `Epoll`
+    ///  
+    /// This function registers file descriptors from event handlers. These
+    /// event handlers are notified when an event is available to be processed.
+    /// File descriptors are removed from the `Epoll` automatically when
+    /// exiting this function.
     fn dispatch_events(
         &mut self,
         event_loop: &mut EventLoopState,
@@ -132,6 +156,7 @@ impl EventManager {
         Ok(())
     }
 
+    /// Run the event loop until the lock exits
     pub fn run_event_loop(
         &mut self,
         app_state: *mut ApplicationState,
