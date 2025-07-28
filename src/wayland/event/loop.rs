@@ -61,6 +61,11 @@ impl EventLoopState {
                     continue;
                 }
 
+                // Don't bother registering a file descriptor multiple times
+                if registered_fds.iter().any(|&(_, fd)| fd == raw_fd) {
+                    continue;
+                }
+
                 let event = EpollEvent::new(EpollFlags::EPOLLIN, *event_type as u64);
                 self.epoll.add(fd, event)?;
                 registered_fds.push((*event_type, raw_fd));
