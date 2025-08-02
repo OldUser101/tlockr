@@ -32,6 +32,8 @@
 #include <atomic>
 #include <chrono>
 
+#include "event.hpp"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -40,11 +42,6 @@ extern "C"
 	int render(const QOpenGLFramebufferObject &fbo, void *buffer);
 
 	typedef void *(*RsGetBufferCallback)(void *user_data);
-
-	struct RsFrameRenderedEvent
-	{
-		void *buf;
-	};
 
 	struct ApplicationState
 	{
@@ -85,8 +82,6 @@ extern "C"
 		ApplicationState *appState;
 	};
 
-	static RsFrameRenderedEvent frameRenderedEvent = {0};
-
 	QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath, ApplicationState *appState)
 	{
 		QmlRenderer *renderer = new QmlRenderer();
@@ -115,14 +110,18 @@ extern "C"
 		renderer->initCondition.notify_one();
 	}
 
-	int write_eventfd_notification(int fd, void *ptr)
+	int write_event(int fd, EventParam param_1, EventParam param_2)
 	{
-		uint64_t val = reinterpret_cast<uintptr_t>(ptr);
+		Event ev = {
+			EventType::Renderer,
+			param_1,
+			param_2,
+		};
 
-		ssize_t res = write(fd, &val, sizeof(val));
-		if (res != sizeof(val))
+		ssize_t res = write(fd, &ev, sizeof(Event));
+		if (res != sizeof(Event))
 		{
-			std::cerr << "Failed to write eventfd notification\n";
+			std::cerr << "Failed to write event\n";
 			return -1;
 		}
 
@@ -131,8 +130,7 @@ extern "C"
 
 	void send_frame_rendered_event(QmlRenderer *renderer, void *buf)
 	{
-		frameRenderedEvent.buf = buf;
-		write_eventfd_notification(renderer->appState->rendererWriteFd, &frameRenderedEvent);
+		write_event(renderer->appState->rendererWriteFd, reinterpret_cast<EventParam>(buf), 0);
 	}
 
 	void setup_renderer(QmlRenderer *renderer)
