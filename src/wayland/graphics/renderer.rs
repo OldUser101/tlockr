@@ -41,9 +41,10 @@ impl WaylandState {
     /// This event contains information about which buffer is ready to be displayed.
     fn read_renderer_event(&self) -> Result<RendererEvent, Box<dyn std::error::Error>> {
         let renderer_fd = self
-            .renderer_read_fd
+            .renderer_read_pipe
             .as_ref()
-            .ok_or("Renderer file descriptor not set")?;
+            .ok_or("Renderer file descriptor not set")?
+            .read_fd();
 
         let mut event_ptr = std::ptr::null_mut::<RendererEvent>();
         let bytes_read = unsafe {
