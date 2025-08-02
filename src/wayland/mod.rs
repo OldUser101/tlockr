@@ -1,4 +1,5 @@
 pub mod buffer;
+pub mod communication;
 mod empty;
 pub mod event;
 pub mod graphics;
