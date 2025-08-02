@@ -16,11 +16,11 @@ pub enum EventType {
     Renderer = 2,
 }
 
-impl TryFrom<u32> for EventType {
+impl TryFrom<u64> for EventType {
     type Error = &'static str;
 
     /// Create an `EventType` from an event tag value
-    fn try_from(tag: u32) -> Result<Self, Self::Error> {
+    fn try_from(tag: u64) -> Result<Self, Self::Error> {
         match tag {
             1 => Ok(EventType::Wayland),
             2 => Ok(EventType::Renderer),
