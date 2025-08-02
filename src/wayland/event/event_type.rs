@@ -1,4 +1,12 @@
-/// The type of event that is being handled
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2025, Nathan Gill
+
+/*
+    event_type.rs:
+        This file contains the `EventType` enum and conversions
+*/
+
+// The type of event that is being handled
 ///
 /// This enum is C-compatible.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
