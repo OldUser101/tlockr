@@ -12,13 +12,7 @@ pub mod wayland;
 
 use std::{env, ffi::CString};
 
-use crate::{
-    shared::state::ApplicationState,
-    wayland::{
-        communication::manager::CommunicationManager, event::manager::EventManager,
-        graphics::wrapper::RendererHandler, state::WaylandState, wrappers::WaylandStateHandler,
-    },
-};
+use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -34,23 +28,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Initializing Wayland interfaces...");
 
     let mut app_state = ApplicationState::new(qml_path_raw);
-    let comm_manager = CommunicationManager::new();
-    let mut event_manager = EventManager::new(comm_manager);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
 
-    let mut event_queue = state.initialize(&mut event_manager)?;
-
-    let wayland_handler = WaylandStateHandler::new(&mut state, &mut event_queue);
-    event_manager.register_handler(wayland_handler);
-
-    let renderer_handler = RendererHandler::new(&mut state);
-    event_manager.register_handler(renderer_handler);
+    let mut event_queue = state.initialize()?;
 
     state.roundtrip(&mut event_queue)?;
 
     println!("Wayland interfaces initialized successfully.");
 
-    event_manager.run_event_loop(&mut app_state as *mut ApplicationState)?;
+    state.run_event_loop(&mut event_queue)?;
 
     state.destroy_renderer();
 
