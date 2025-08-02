@@ -12,10 +12,10 @@ use wayland_protocols::wp::viewporter::client::wp_viewport::WpViewport;
 
 use crate::{
     shared::{
-        ffi::{RendererEvent, cleanup_renderer, initialize_renderer, set_callbacks},
+        ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
         interface::{get_qml_path, get_renderer, set_renderer},
     },
-    wayland::{buffer::manager::BufferManager, state::WaylandState},
+    wayland::{buffer::manager::BufferManager, event::event::Event, state::WaylandState},
 };
 use std::{ffi::c_void, i32};
 
@@ -35,42 +35,35 @@ impl WaylandState {
         }
     }
 
-    /// Reads a single `RendererEvent` from the renderer event pipe
+    /// Reads a single `Event` from the renderer event pipe
     ///
-    /// This function reads a pointer to a `RendererEvent` from the renderer's file descriptor.
+    /// This function reads a pointer to a `Event` from the renderer's file descriptor.
     /// This event contains information about which buffer is ready to be displayed.
-    fn read_renderer_event(&self) -> Result<RendererEvent, Box<dyn std::error::Error>> {
+    fn read_renderer_event(&self) -> Result<Event, Box<dyn std::error::Error>> {
         let renderer_fd = self
             .renderer_read_pipe
             .as_ref()
             .ok_or("Renderer file descriptor not set")?
             .read_fd();
 
-        let mut event_ptr = std::ptr::null_mut::<RendererEvent>();
-        let bytes_read = unsafe {
-            nix::unistd::read(
-                renderer_fd,
-                std::slice::from_raw_parts_mut(
-                    &mut event_ptr as *mut _ as *mut u8,
-                    std::mem::size_of::<*mut RendererEvent>(),
-                ),
-            )?
-        };
+        let mut event_buffer = [0u8; std::mem::size_of::<Event>()];
+        let bytes_read = nix::unistd::read(renderer_fd, &mut event_buffer)?;
 
-        if bytes_read != std::mem::size_of::<*mut RendererEvent>() {
+        if bytes_read != std::mem::size_of::<Event>() {
             return Err(format!(
                 "Failed to read renderer event pipe, expected {} byets, got {}.",
-                std::mem::size_of::<*mut RendererEvent>(),
+                std::mem::size_of::<Event>(),
                 bytes_read
             )
             .into());
         }
 
-        if event_ptr.is_null() {
-            return Err("Received NULL event pointer.".into());
-        }
+        // https://stackoverflow.com/questions/42499049/how-to-transmute-a-u8-buffer-to-struct-in-rust
+        let (head, body, _tail) = unsafe { event_buffer.align_to::<Event>() };
+        assert!(head.is_empty(), "Event data was not aligned");
+        let event = body[0];
 
-        Ok(unsafe { std::ptr::read(event_ptr) })
+        Ok(event)
     }
 
     /// Retrieves the currently active surface and viewport
@@ -85,9 +78,9 @@ impl WaylandState {
 
     /// Updates a buffer associated with a renderer event
     ///
-    /// This functions takes a `RendererEvent` object, and finds a `Buffer` associated with it.
+    /// This functions takes a `Event` object, and finds a `Buffer` associated with it.
     /// This buffer is then attached to the currently active Wayland surface, and committed.
-    fn update_buffer(&mut self, event: &RendererEvent) -> Result<(), Box<dyn std::error::Error>> {
+    fn update_buffer(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         let width = self.width;
         let height = self.height;
 
