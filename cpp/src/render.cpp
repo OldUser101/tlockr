@@ -32,6 +32,8 @@
 #include <atomic>
 #include <chrono>
 
+#include "event.hpp"
+
 #ifdef __cplusplus
 extern "C"
 {
