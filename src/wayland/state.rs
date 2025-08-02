@@ -7,11 +7,12 @@
         backend, and links with the rest of the application.
 */
 
-use crate::shared::interface::{get_state, set_renderer_fd};
+use crate::shared::interface::{get_state, set_renderer_read_fd, set_renderer_write_fd};
 use crate::shared::{interface::set_state, state::State};
 use crate::wayland::buffer::manager::BufferManager;
+use crate::wayland::communication::pipe::Pipe;
 use crate::{shared::state::ApplicationState, wayland::input::keyboard::KeyboardMapping};
-use std::os::fd::{AsRawFd, OwnedFd};
+use std::os::fd::AsRawFd;
 use wayland_client::EventQueue;
 use wayland_client::{
     Connection,
@@ -63,8 +64,8 @@ pub struct WaylandState {
 
     pub app_state: *mut ApplicationState,
 
-    pub renderer_read_fd: Option<OwnedFd>,
-    pub renderer_write_fd: Option<OwnedFd>,
+    pub renderer_read_pipe: Option<Pipe>,
+    pub renderer_write_pipe: Option<Pipe>,
 }
 
 impl WaylandState {
@@ -92,8 +93,8 @@ impl WaylandState {
             height: -1,
             output_configured: false,
             app_state: app_state,
-            renderer_read_fd: None,
-            renderer_write_fd: None,
+            renderer_read_pipe: None,
+            renderer_write_pipe: None,
         }
     }
 
@@ -127,10 +128,17 @@ impl WaylandState {
 
         set_state(self.app_state, State::Initialized);
 
-        let (renderer_read_fd, renderer_write_fd) = nix::unistd::pipe()?;
-        set_renderer_fd(self.app_state, renderer_write_fd.as_raw_fd());
-        self.renderer_read_fd = Some(renderer_read_fd);
-        self.renderer_write_fd = Some(renderer_write_fd);
+        let renderer_read_pipe = Pipe::new()?;
+        let renderer_write_pipe = Pipe::new()?;
+
+        // The naming is weird here
+        // The renderer's read fd is the readable side of our write pipe
+        // The renderer's write fd is the writeable side of our read pipe
+        set_renderer_read_fd(self.app_state, renderer_write_pipe.read_fd().as_raw_fd());
+        set_renderer_write_fd(self.app_state, renderer_read_pipe.write_fd().as_raw_fd());
+
+        self.renderer_read_pipe = Some(renderer_read_pipe);
+        self.renderer_write_pipe = Some(renderer_write_pipe);
 
         Ok(event_queue)
     }

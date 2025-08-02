@@ -26,7 +26,8 @@ pub struct ApplicationState {
     pub qml_path: *mut c_char,
     pub state: State,
     pub renderer: *mut QmlRenderer,
-    pub renderer_fd: c_int,
+    pub renderer_write_fd: c_int,
+    pub renderer_read_fd: c_int,
 }
 
 impl ApplicationState {
@@ -35,7 +36,8 @@ impl ApplicationState {
             qml_path: qml_path,
             state: State::None,
             renderer: std::ptr::null_mut(),
-            renderer_fd: -1,
+            renderer_write_fd: -1,
+            renderer_read_fd: -1,
         }
     }
 }

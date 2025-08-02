@@ -189,11 +189,10 @@ impl WaylandState {
         event_queue: &mut EventQueue<Self>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut event_loop = EventLoop::new(
-            self.renderer_read_fd
+            self.renderer_read_pipe
                 .as_ref()
-                .ok_or::<Box<dyn std::error::Error>>(
-                    "Renderer read file descriptor not set".into(),
-                )?
+                .ok_or("Renderer file descriptor not set")?
+                .read_fd()
                 .as_raw_fd(),
         )?;
 

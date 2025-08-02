@@ -40,7 +40,6 @@ extern "C"
 	int render(const QOpenGLFramebufferObject &fbo, void *buffer);
 
 	typedef void *(*RsGetBufferCallback)(void *user_data);
-	typedef void (*RsFrameReadyCallback)(void *user_data, void *buffer);
 
 	struct RsFrameRenderedEvent
 	{
@@ -52,7 +51,8 @@ extern "C"
 		const char *qmlPath;
 		int state;
 		void *renderer;
-		int rendererFd;
+		int rendererWriteFd;
+		int rendererReadFd;
 	};
 
 	struct QmlRenderer
@@ -132,7 +132,7 @@ extern "C"
 	void send_frame_rendered_event(QmlRenderer *renderer, void *buf)
 	{
 		frameRenderedEvent.buf = buf;
-		write_eventfd_notification(renderer->appState->rendererFd, &frameRenderedEvent);
+		write_eventfd_notification(renderer->appState->rendererWriteFd, &frameRenderedEvent);
 	}
 
 	void setup_renderer(QmlRenderer *renderer)
