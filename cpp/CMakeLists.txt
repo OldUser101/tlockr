@@ -15,6 +15,7 @@ find_package(Qt6 COMPONENTS Core Quick REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC
   src/render.cpp
+  src/event_handler.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

@@ -6,82 +6,29 @@
                 This file contains the QML rendering logic.
 */
 
-#include <QDebug>
-#include <QGuiApplication>
-#include <QOffscreenSurface>
-#include <QOpenGLContext>
-#include <QOpenGLFramebufferObject>
-#include <QQmlComponent>
-#include <QQmlEngine>
-#include <QQuickItem>
-#include <QQuickRenderControl>
-#include <QQuickRenderTarget>
-#include <QQuickWindow>
-#include <QSocketNotifier>
-#include <QSurfaceFormat>
-#include <QTimer>
-#include <QVariant>
-
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
-#include <atomic>
-#include <chrono>
-#include <condition_variable>
-#include <errno.h>
-#include <fcntl.h>
-#include <iostream>
-#include <mutex>
-#include <thread>
-#include <unistd.h>
-
-#include "event.hpp"
+#include "render.hpp"
+#include "event_handler.hpp"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int render(const QOpenGLFramebufferObject &fbo, void *buffer);
+int writeEvent(int fd, EventType event_type, EventParam param_1,
+               EventParam param_2) {
+    Event ev = {
+        event_type,
+        param_1,
+        param_2,
+    };
 
-typedef void *(*RsGetBufferCallback)(void *user_data);
+    ssize_t res = write(fd, &ev, sizeof(Event));
+    if (res != sizeof(Event)) {
+        std::cerr << "Failed to write event: " << strerror(errno) << "\n";
+        return -1;
+    }
 
-struct ApplicationState {
-    const char *qmlPath;
-    int state;
-    void *renderer;
-    int rendererWriteFd;
-    int rendererReadFd;
-};
-
-struct QmlRenderer {
-    QGuiApplication *app;
-    QSize fbSize;
-    QOpenGLContext *context;
-    QSurfaceFormat *surfaceFormat;
-    QOffscreenSurface *surface;
-    QQuickRenderControl *renderControl;
-    QQuickWindow *window;
-    QOpenGLFramebufferObjectFormat *fbFormat;
-    QOpenGLFramebufferObject *fb;
-    QQmlEngine *engine;
-    QQmlComponent *component;
-    QSocketNotifier *eventSocketNotifier;
-
-    const char *qmlPath;
-    bool running = false;
-
-    RsGetBufferCallback getBufferCallback = nullptr;
-    void *userData = nullptr;
-
-    std::thread renderThread;
-    std::atomic<bool> threadRunning{false};
-    std::atomic<bool> shouldStop{false};
-    std::mutex initMutex;
-    std::condition_variable initCondition;
-    std::atomic<bool> initialized{false};
-
-    ApplicationState *appState;
-};
+    return 0;
+}
 
 QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
                                  ApplicationState *appState) {
@@ -89,6 +36,8 @@ QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
     renderer->fbSize = QSize(width, height);
     renderer->qmlPath = qmlPath;
     renderer->appState = appState;
+
+    renderer->eventHandler = new EventHandler(renderer);
 
     return renderer;
 }
@@ -109,41 +58,6 @@ void set_initialize(QmlRenderer *renderer) {
     renderer->initCondition.notify_one();
 }
 
-int read_event(int fd, Event *event) {
-    ssize_t res = read(fd, event, sizeof(Event));
-    if (res == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            return -1;
-        } else {
-            std::cerr << "Failed to read event: " << strerror(errno) << "\n";
-            return -1;
-        }
-    } else if (res != sizeof(Event)) {
-        std::cerr << "Partial read: expected " << sizeof(Event)
-                  << " bytes, got " << res << "\n";
-        return -1;
-    }
-
-    return 0;
-}
-
-int event_handler(QmlRenderer *renderer, EventType event_type,
-                  EventParam param_1, EventParam param_2) {
-    std::cout << "Event Type: " << (uint64_t)event_type
-              << "; Param 1: " << param_1 << "; Param 2: " << param_2 << "\n";
-    std::cout.flush();
-    return 0;
-}
-
-void handle_received_event(QmlRenderer *renderer) {
-    Event ev = {};
-    int result = read_event(renderer->appState->rendererReadFd, &ev);
-
-    if (result == 0) {
-        event_handler(renderer, ev.event_type, ev.param_1, ev.param_2);
-    }
-}
-
 void setup_event_socket(QmlRenderer *renderer) {
     // Set non-blocking I/O on the read file descriptor
     int fd = renderer->appState->rendererReadFd;
@@ -153,31 +67,16 @@ void setup_event_socket(QmlRenderer *renderer) {
 
     notifier->setEnabled(true);
 
-    QObject::connect(notifier, &QSocketNotifier::activated,
-                     [renderer](int) { handle_received_event(renderer); });
+    QObject::connect(notifier, &QSocketNotifier::activated, [renderer](int) {
+        renderer->eventHandler->handleReceivedEvent();
+    });
 
     renderer->eventSocketNotifier = notifier;
 }
 
-int write_event(int fd, EventParam param_1, EventParam param_2) {
-    Event ev = {
-        EventType::Renderer,
-        param_1,
-        param_2,
-    };
-
-    ssize_t res = write(fd, &ev, sizeof(Event));
-    if (res != sizeof(Event)) {
-        std::cerr << "Failed to write event\n";
-        return -1;
-    }
-
-    return 0;
-}
-
 void send_frame_rendered_event(QmlRenderer *renderer, void *buf) {
-    write_event(renderer->appState->rendererWriteFd,
-                reinterpret_cast<EventParam>(buf), 0);
+    writeEvent(renderer->appState->rendererWriteFd, EventType::Renderer,
+               reinterpret_cast<EventParam>(buf), 0);
 }
 
 void setup_renderer(QmlRenderer *renderer) {
