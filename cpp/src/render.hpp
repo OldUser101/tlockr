@@ -11,10 +11,12 @@ extern "C" {
 #endif
 
 struct QmlRenderer;
+struct ApplicationState;
 
 typedef void *(*RsGetBufferCallback)(void *user_data);
 
-QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath);
+QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
+                                 ApplicationState *appState);
 int start_renderer(QmlRenderer *renderer);
 void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer,
                    void *userData);

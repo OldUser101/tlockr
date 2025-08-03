@@ -15,6 +15,7 @@ extern "C" {
 enum class EventType : uint64_t {
     Wayland = 1,
     Renderer = 2,
+    Keyboard = 3,
 };
 
 typedef uint64_t EventParam;

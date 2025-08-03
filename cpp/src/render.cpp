@@ -17,6 +17,7 @@
 #include <QQuickRenderControl>
 #include <QQuickRenderTarget>
 #include <QQuickWindow>
+#include <QSocketNotifier>
 #include <QSurfaceFormat>
 #include <QTimer>
 #include <QVariant>
@@ -27,6 +28,8 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <errno.h>
+#include <fcntl.h>
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -62,6 +65,7 @@ struct QmlRenderer {
     QOpenGLFramebufferObject *fb;
     QQmlEngine *engine;
     QQmlComponent *component;
+    QSocketNotifier *eventSocketNotifier;
 
     const char *qmlPath;
     bool running = false;
@@ -103,6 +107,51 @@ void set_initialize(QmlRenderer *renderer) {
         renderer->initialized = true;
     }
     renderer->initCondition.notify_one();
+}
+
+int read_event(int fd, Event *event) {
+    ssize_t res = read(fd, event, sizeof(Event));
+    if (res == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return -1;
+        } else {
+            std::cerr << "Failed to read event: " << strerror(errno) << "\n";
+            return -1;
+        }
+    } else if (res != sizeof(Event)) {
+        std::cerr << "Partial read: expected " << sizeof(Event)
+                  << " bytes, got " << res << "\n";
+        return -1;
+    }
+
+    return 0;
+}
+
+void handle_received_event(QmlRenderer *renderer) {
+    Event ev = {};
+    int result = read_event(renderer->appState->rendererReadFd, &ev);
+
+    if (result == 0) {
+        std::cout << "Event Type: " << (uint64_t)ev.event_type
+                  << "; Param 1: " << ev.param_1 << "; Param 2: " << ev.param_2
+                  << "\n";
+        std::cout.flush();
+    }
+}
+
+void setup_event_socket(QmlRenderer *renderer) {
+    // Set non-blocking I/O on the read file descriptor
+    int fd = renderer->appState->rendererReadFd;
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+
+    QSocketNotifier *notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
+
+    notifier->setEnabled(true);
+
+    QObject::connect(notifier, &QSocketNotifier::activated,
+                     [renderer](int) { handle_received_event(renderer); });
+
+    renderer->eventSocketNotifier = notifier;
 }
 
 int write_event(int fd, EventParam param_1, EventParam param_2) {
@@ -264,6 +313,7 @@ void qml_renderer_thread(QmlRenderer *renderer) {
     QGuiApplication::setAttribute(Qt::AA_UseOpenGLES, false);
 
     setup_renderer(renderer);
+    setup_event_socket(renderer);
     setup_renderer_signals(renderer);
     set_initialize(renderer);
 

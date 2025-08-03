@@ -7,7 +7,10 @@
         and contains basic keypress handling.
 */
 
-use crate::wayland::state::WaylandState;
+use crate::wayland::{
+    event::{event::Event, event_param::EventParam, event_type::EventType},
+    state::WaylandState,
+};
 use memmap2::MmapOptions;
 use std::{
     fs::File,
@@ -89,6 +92,38 @@ impl Dispatch<WlKeyboard, ()> for WaylandState {
                         let keysym = state.key_get_one_sym(keycode);
                         let s = xkbcommon_rs::keysym::keysym_get_name(&keysym.unwrap()).unwrap();
                         println!("Pressed: {}", s);
+
+                        // Write a dummy event into the renderer's event pipe
+                        let event = Event::new(
+                            EventType::Keyboard,
+                            EventParam::from(0),
+                            EventParam::from(0),
+                        );
+                        let event_ptr = &event as *const Event as *const u8;
+                        let event_buf = unsafe {
+                            std::slice::from_raw_parts(event_ptr, std::mem::size_of::<Event>())
+                        };
+
+                        match nix::unistd::write(
+                            wayland_state
+                                .renderer_write_pipe
+                                .as_ref()
+                                .unwrap()
+                                .write_fd(),
+                            event_buf,
+                        ) {
+                            Ok(_) => {
+                                // Event sent successfully
+                            }
+                            Err(nix::errno::Errno::EAGAIN) => {
+                                println!(
+                                    "Warning: Dropping keyboard event, renderer pipe buffer full"
+                                );
+                            }
+                            Err(e) => {
+                                println!("Failed to send keyboard event to renderer: {}", e);
+                            }
+                        }
                     }
                 }
             }

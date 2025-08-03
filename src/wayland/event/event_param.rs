@@ -59,3 +59,9 @@ impl From<*const c_void> for EventParam {
         EventParam(ptr as u64)
     }
 }
+
+impl From<u64> for EventParam {
+    fn from(value: u64) -> Self {
+        EventParam(value)
+    }
+}
