@@ -9,24 +9,21 @@
 #include <cstdint>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-    enum class EventType : uint64_t
-    {
-        Wayland = 1,
-        Renderer = 2,
-    };
+enum class EventType : uint64_t {
+    Wayland = 1,
+    Renderer = 2,
+};
 
-    typedef uint64_t EventParam;
+typedef uint64_t EventParam;
 
-    typedef struct
-    {
-        EventType event_type;
-        EventParam param_1;
-        EventParam param_2;
-    } Event;
+typedef struct {
+    EventType event_type;
+    EventParam param_1;
+    EventParam param_2;
+} Event;
 
 #ifdef __cplusplus
 }
