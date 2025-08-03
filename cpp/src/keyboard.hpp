@@ -26,6 +26,8 @@ public:
 
     void setupXkbContext();
     void handleKeymapEvent(int fd, uint32_t size);
+    void handleModifiersEvent(uint32_t mods_depressed, uint32_t mods_latched,
+                              uint32_t mods_locked, uint32_t group);
 };
 
 #endif

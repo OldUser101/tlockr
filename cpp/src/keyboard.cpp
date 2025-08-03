@@ -69,3 +69,14 @@ void KeyboardHandler::handleKeymapEvent(int fd, uint32_t size) {
 
     std::cout << "Loaded new XKB keymap\n";
 }
+
+void KeyboardHandler::handleModifiersEvent(uint32_t mods_depressed,
+                                           uint32_t mods_latched,
+                                           uint32_t mods_locked,
+                                           uint32_t group) {
+    if (this->m_xkbState) {
+        xkb_state_update_mask(this->m_xkbState, mods_depressed, mods_latched,
+                              mods_locked, 0, 0, group);
+        std::cout << "Updated modifiers\n";
+    }
+}
