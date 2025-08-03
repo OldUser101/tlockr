@@ -160,6 +160,7 @@ void setup_renderer_signals(QmlRenderer *renderer) {
                 rootItem->setWidth(renderer->fbSize.width());
                 rootItem->setHeight(renderer->fbSize.height());
 
+                renderer->rootItem = rootItem;
                 renderer->running = true;
             } else if (renderer->component->status() == QQmlComponent::Error) {
                 std::cerr << "QML Component has errors:" << std::endl;

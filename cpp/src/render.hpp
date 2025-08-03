@@ -36,7 +36,8 @@
 #include <unistd.h>
 
 #include "event.hpp"
-#include "event_handler.hpp"
+
+class EventHandler;
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +66,7 @@ struct QmlRenderer {
     QQmlEngine *engine;
     QQmlComponent *component;
     QSocketNotifier *eventSocketNotifier;
+    QQuickItem *rootItem;
 
     const char *qmlPath;
     bool running = false;

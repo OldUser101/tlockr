@@ -11,6 +11,12 @@
 #include <cstdint>
 #include <xkbcommon/xkbcommon.h>
 
+enum class KeyState : uint32_t {
+    Released = 0,
+    Pressed = 1,
+    Repeated = 2,
+};
+
 struct QmlRenderer;
 
 class KeyboardHandler {
@@ -28,6 +34,13 @@ public:
     void handleKeymapEvent(int fd, uint32_t size);
     void handleModifiersEvent(uint32_t mods_depressed, uint32_t mods_latched,
                               uint32_t mods_locked, uint32_t group);
+    void handleKeyEvent(uint32_t key_code, KeyState state);
+
+    Qt::Key xkbKeysymToQtKey(xkb_keysym_t keysym);
+    Qt::KeyboardModifiers xkbStateToQtModifiers();
+
+    void sendKeyEvent(QEvent::Type eventType, Qt::Key key,
+                      Qt::KeyboardModifiers modifiers, const QString &text);
 };
 
 #endif

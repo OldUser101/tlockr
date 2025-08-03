@@ -7,10 +7,10 @@
 #define EVENT_HANDLER_HPP
 
 #include "event.hpp"
-#include "keyboard.hpp"
 #include <memory>
 
 struct QmlRenderer;
+class KeyboardHandler;
 
 class EventHandler {
 private:
