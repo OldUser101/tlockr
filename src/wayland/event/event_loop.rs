@@ -87,6 +87,7 @@ impl WaylandState {
                 EventType::Renderer => {
                     self.handle_renderer_event()?;
                 }
+                _ => {}
             }
         }
 

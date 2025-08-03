@@ -6,6 +6,8 @@
         `Event` and `EventType` objects for event handling
 */
 
+use std::os::fd::OwnedFd;
+
 use crate::wayland::event::{event_param::EventParam, event_type::EventType};
 
 /// Event structure containing event serial, type, and parameters
@@ -44,5 +46,16 @@ impl Event {
     /// This function is not responsible for proper pointer management.
     pub unsafe fn from_mut_ptr(ptr: *mut Event) -> Self {
         unsafe { std::ptr::read(ptr) }
+    }
+
+    /// Write this object into a file specified by `fd`
+    pub fn write_to(&self, fd: &OwnedFd) -> Result<(), Box<dyn std::error::Error>> {
+        let event_ptr = self as *const Event as *const u8;
+        let event_buf =
+            unsafe { std::slice::from_raw_parts(event_ptr, std::mem::size_of::<Event>()) };
+
+        nix::unistd::write(fd, event_buf)?;
+
+        Ok(())
     }
 }

@@ -8,10 +8,10 @@
 */
 
 use crate::shared::interface::{get_state, set_renderer_read_fd, set_renderer_write_fd};
+use crate::shared::state::ApplicationState;
 use crate::shared::{interface::set_state, state::State};
 use crate::wayland::buffer::manager::BufferManager;
 use crate::wayland::communication::pipe::Pipe;
-use crate::{shared::state::ApplicationState, wayland::input::keyboard::KeyboardMapping};
 use std::os::fd::AsRawFd;
 use wayland_client::EventQueue;
 use wayland_client::{
@@ -53,8 +53,6 @@ pub struct WaylandState {
 
     pub keyboard: Option<WlKeyboard>,
 
-    pub keymap: Option<KeyboardMapping>,
-
     pub viewport: Option<WpViewport>,
 
     pub width: i32,
@@ -87,7 +85,6 @@ impl WaylandState {
             session_lock: None,
             session_lock_surface: None,
             keyboard: None,
-            keymap: None,
             viewport: None,
             width: -1,
             height: -1,

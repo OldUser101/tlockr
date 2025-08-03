@@ -26,5 +26,7 @@ fn main() {
     println!("cargo:rustc-link-lib=stdc++");
     println!("cargo:rustc-link-lib=GLESv2");
 
+    println!("cargo:rustc-link-lib=xkbcommon");
+
     println!("cargo:rerun-if-changed=cpp/");
 }

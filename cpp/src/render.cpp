@@ -6,78 +6,29 @@
                 This file contains the QML rendering logic.
 */
 
-#include <QDebug>
-#include <QGuiApplication>
-#include <QOffscreenSurface>
-#include <QOpenGLContext>
-#include <QOpenGLFramebufferObject>
-#include <QQmlComponent>
-#include <QQmlEngine>
-#include <QQuickItem>
-#include <QQuickRenderControl>
-#include <QQuickRenderTarget>
-#include <QQuickWindow>
-#include <QSurfaceFormat>
-#include <QTimer>
-#include <QVariant>
-
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
-#include <atomic>
-#include <chrono>
-#include <condition_variable>
-#include <iostream>
-#include <mutex>
-#include <thread>
-#include <unistd.h>
-
-#include "event.hpp"
+#include "render.hpp"
+#include "event_handler.hpp"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int render(const QOpenGLFramebufferObject &fbo, void *buffer);
+int writeEvent(int fd, EventType event_type, EventParam param_1,
+               EventParam param_2) {
+    Event ev = {
+        event_type,
+        param_1,
+        param_2,
+    };
 
-typedef void *(*RsGetBufferCallback)(void *user_data);
+    ssize_t res = write(fd, &ev, sizeof(Event));
+    if (res != sizeof(Event)) {
+        std::cerr << "Failed to write event: " << strerror(errno) << "\n";
+        return -1;
+    }
 
-struct ApplicationState {
-    const char *qmlPath;
-    int state;
-    void *renderer;
-    int rendererWriteFd;
-    int rendererReadFd;
-};
-
-struct QmlRenderer {
-    QGuiApplication *app;
-    QSize fbSize;
-    QOpenGLContext *context;
-    QSurfaceFormat *surfaceFormat;
-    QOffscreenSurface *surface;
-    QQuickRenderControl *renderControl;
-    QQuickWindow *window;
-    QOpenGLFramebufferObjectFormat *fbFormat;
-    QOpenGLFramebufferObject *fb;
-    QQmlEngine *engine;
-    QQmlComponent *component;
-
-    const char *qmlPath;
-    bool running = false;
-
-    RsGetBufferCallback getBufferCallback = nullptr;
-    void *userData = nullptr;
-
-    std::thread renderThread;
-    std::atomic<bool> threadRunning{false};
-    std::atomic<bool> shouldStop{false};
-    std::mutex initMutex;
-    std::condition_variable initCondition;
-    std::atomic<bool> initialized{false};
-
-    ApplicationState *appState;
-};
+    return 0;
+}
 
 QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
                                  ApplicationState *appState) {
@@ -85,6 +36,8 @@ QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
     renderer->fbSize = QSize(width, height);
     renderer->qmlPath = qmlPath;
     renderer->appState = appState;
+
+    renderer->eventHandler = new EventHandler(renderer);
 
     return renderer;
 }
@@ -105,25 +58,25 @@ void set_initialize(QmlRenderer *renderer) {
     renderer->initCondition.notify_one();
 }
 
-int write_event(int fd, EventParam param_1, EventParam param_2) {
-    Event ev = {
-        EventType::Renderer,
-        param_1,
-        param_2,
-    };
+void setup_event_socket(QmlRenderer *renderer) {
+    // Set non-blocking I/O on the read file descriptor
+    int fd = renderer->appState->rendererReadFd;
+    fcntl(fd, F_SETFL, O_NONBLOCK);
 
-    ssize_t res = write(fd, &ev, sizeof(Event));
-    if (res != sizeof(Event)) {
-        std::cerr << "Failed to write event\n";
-        return -1;
-    }
+    QSocketNotifier *notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
 
-    return 0;
+    notifier->setEnabled(true);
+
+    QObject::connect(notifier, &QSocketNotifier::activated, [renderer](int) {
+        renderer->eventHandler->handleReceivedEvent();
+    });
+
+    renderer->eventSocketNotifier = notifier;
 }
 
 void send_frame_rendered_event(QmlRenderer *renderer, void *buf) {
-    write_event(renderer->appState->rendererWriteFd,
-                reinterpret_cast<EventParam>(buf), 0);
+    writeEvent(renderer->appState->rendererWriteFd, EventType::Renderer,
+               reinterpret_cast<EventParam>(buf), 0);
 }
 
 void setup_renderer(QmlRenderer *renderer) {
@@ -207,6 +160,7 @@ void setup_renderer_signals(QmlRenderer *renderer) {
                 rootItem->setWidth(renderer->fbSize.width());
                 rootItem->setHeight(renderer->fbSize.height());
 
+                renderer->rootItem = rootItem;
                 renderer->running = true;
             } else if (renderer->component->status() == QQmlComponent::Error) {
                 std::cerr << "QML Component has errors:" << std::endl;
@@ -264,6 +218,7 @@ void qml_renderer_thread(QmlRenderer *renderer) {
     QGuiApplication::setAttribute(Qt::AA_UseOpenGLES, false);
 
     setup_renderer(renderer);
+    setup_event_socket(renderer);
     setup_renderer_signals(renderer);
     set_initialize(renderer);
 
