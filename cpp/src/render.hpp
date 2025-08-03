@@ -7,18 +7,18 @@
 #define RENDER_HPP
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-    struct QmlRenderer;
+struct QmlRenderer;
 
-    typedef void *(*RsGetBufferCallback)(void *user_data);
+typedef void *(*RsGetBufferCallback)(void *user_data);
 
-    QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath);
-    int start_renderer(QmlRenderer *renderer);
-    void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer, void *userData);
-    void cleanup_renderer(QmlRenderer *renderer);
+QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath);
+int start_renderer(QmlRenderer *renderer);
+void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer,
+                   void *userData);
+void cleanup_renderer(QmlRenderer *renderer);
 
 #ifdef __cplusplus
 }

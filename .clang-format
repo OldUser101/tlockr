@@ -1,0 +1,3 @@
+BasedOnStyle: LLVM
+AlwaysAddBraces: true
+IndentWidth: 4
