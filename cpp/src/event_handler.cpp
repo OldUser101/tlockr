@@ -25,13 +25,19 @@ int readEvent(int fd, Event *event) {
     return 0;
 }
 
-
-EventHandler::EventHandler(QmlRenderer *renderer) : m_renderer(renderer) {}
+EventHandler::EventHandler(QmlRenderer *renderer) : m_renderer(renderer) {
+    this->m_keyboardHandler = new KeyboardHandler(renderer);
+}
 
 EventHandler::~EventHandler() = default;
 
 int EventHandler::processEvent(EventType event_type, EventParam param_1,
                                EventParam param_2) {
+    switch (event_type) {
+        case EventType::KeyboardKeymap: {
+            this->m_keyboardHandler->handleKeymapEvent(param_1, param_2);
+        }
+    }
     std::cout << "Event Type: " << static_cast<uint64_t>(event_type)
               << "; Param 1: " << param_1 << "; Param 2: " << param_2 << "\n";
     std::cout.flush();

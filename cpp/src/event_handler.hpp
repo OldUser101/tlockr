@@ -7,15 +7,17 @@
 #define EVENT_HANDLER_HPP
 
 #include "event.hpp"
+#include "keyboard.hpp"
 #include <memory>
 
 struct QmlRenderer;
 
 class EventHandler {
-  private:
+private:
     QmlRenderer *m_renderer;
+    KeyboardHandler *m_keyboardHandler;
 
-  public:
+public:
     explicit EventHandler(QmlRenderer *renderer);
     ~EventHandler();
 
