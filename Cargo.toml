@@ -8,11 +8,9 @@ edition = "2024"
 build = "build.rs"
 
 [dependencies]
-memmap2 = "0.9.5"
 nix = { version = "0.30.1", features = [ "fs", "event" ] }
 wayland-client = "0.31.10"
 wayland-protocols = { version = "0.32.8", features = [ "client", "staging" ] }
-xkbcommon-rs = "0.1.2"
 
 [build-dependencies]
 cmake = "0.1"

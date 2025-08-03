@@ -14,7 +14,10 @@
 pub enum EventType {
     Wayland = 1,
     Renderer = 2,
-    Keyboard = 3,
+    KeyboardKeymap = 3,
+    KeyboardKey = 4,
+    KeyboardModifiers = 5,
+    KeyboardRepeatInfo = 6,
 }
 
 impl TryFrom<u64> for EventType {
@@ -25,7 +28,10 @@ impl TryFrom<u64> for EventType {
         match tag {
             1 => Ok(EventType::Wayland),
             2 => Ok(EventType::Renderer),
-            3 => Ok(EventType::Keyboard),
+            3 => Ok(EventType::KeyboardKeymap),
+            4 => Ok(EventType::KeyboardKey),
+            5 => Ok(EventType::KeyboardModifiers),
+            6 => Ok(EventType::KeyboardRepeatInfo),
             _ => Err("Invalid EventType tag"),
         }
     }

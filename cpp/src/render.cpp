@@ -129,13 +129,6 @@ int read_event(int fd, Event *event) {
 
 int event_handler(QmlRenderer *renderer, EventType event_type,
                   EventParam param_1, EventParam param_2) {
-
-    switch (event_type) {
-    case EventType::Keyboard: {
-    }
-    default:
-        return 1;
-    }
     std::cout << "Event Type: " << (uint64_t)event_type
               << "; Param 1: " << param_1 << "; Param 2: " << param_2 << "\n";
     std::cout.flush();
