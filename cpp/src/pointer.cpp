@@ -19,7 +19,23 @@ PointerHandler::~PointerHandler() = default;
 void PointerHandler::handleMotionEvent(double surface_x, double surface_y) {
     QPointF globalPos(surface_x, surface_y);
 
-    sendMouseEvent(QEvent::MouseMove, globalPos, Qt::NoButton, Qt::NoButton);
+    m_globalPos = globalPos;
+
+    sendMouseEvent(QEvent::MouseMove, globalPos, Qt::NoButton, m_buttonState);
+}
+
+void PointerHandler::handleButtonEvent(uint32_t button, ButtonState state) {
+    Qt::MouseButton mouse_button = waylandButtonToQtButton(button);
+
+    if (state == ButtonState::Pressed) {
+        m_buttonState |= mouse_button;
+        sendMouseEvent(QEvent::MouseButtonPress, m_globalPos, mouse_button,
+                       m_buttonState);
+    } else {
+        m_buttonState &= ~mouse_button;
+        sendMouseEvent(QEvent::MouseButtonRelease, m_globalPos, mouse_button,
+                       m_buttonState);
+    }
 }
 
 void PointerHandler::sendMouseEvent(QEvent::Type eventType, QPointF globalPos,

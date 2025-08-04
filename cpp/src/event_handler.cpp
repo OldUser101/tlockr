@@ -61,6 +61,11 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
             m_pointerHandler->handleMotionEvent(surface_x, surface_y);
             break;
         }
+        case EventType::PointerButton: {
+            m_pointerHandler->handleButtonEvent(
+                param_1, static_cast<ButtonState>(param_2));
+            break;
+        }
     }
     std::cout << "Event Type: " << static_cast<uint64_t>(event_type)
               << "; Param 1: " << param_1 << "; Param 2: " << param_2 << "\n";
