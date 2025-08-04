@@ -14,6 +14,7 @@ use crate::wayland::buffer::manager::BufferManager;
 use crate::wayland::communication::pipe::Pipe;
 use std::os::fd::AsRawFd;
 use wayland_client::EventQueue;
+use wayland_client::protocol::wl_pointer::WlPointer;
 use wayland_client::{
     Connection,
     protocol::{
@@ -52,6 +53,7 @@ pub struct WaylandState {
     pub session_lock_surface: Option<ExtSessionLockSurfaceV1>,
 
     pub keyboard: Option<WlKeyboard>,
+    pub pointer: Option<WlPointer>,
 
     pub viewport: Option<WpViewport>,
 
@@ -85,6 +87,7 @@ impl WaylandState {
             session_lock: None,
             session_lock_surface: None,
             keyboard: None,
+            pointer: None,
             viewport: None,
             width: -1,
             height: -1,
