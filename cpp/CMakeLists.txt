@@ -20,6 +20,7 @@ add_library(${PROJECT_NAME} STATIC
   src/event_handler.cpp
   src/keyboard.cpp
   src/keymap.cpp
+  src/pointer.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
