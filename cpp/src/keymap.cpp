@@ -4,14 +4,17 @@
 #include "keyboard.hpp"
 
 Qt::Key KeyboardHandler::xkbKeysymToQtKey(xkb_keysym_t keysym) {
-    if (keysym >= 0x20 && (keysym < 0xD800 || keysym > 0xDFFF) &&
-        keysym <= 0x10FFFF) {
+    if (keysym >= 0x20 && keysym < 0x100) {
         if (keysym >= 'a' && keysym <= 'z') {
             // All Qt keys are uppercase
             return static_cast<Qt::Key>(keysym - 'a' + 'A');
         } else {
             return static_cast<Qt::Key>(keysym);
         }
+    }
+
+    if (keysym >= 0x1000100 && keysym <= 0x110FFFF) {
+        return static_cast<Qt::Key>(keysym - 0x1000000);
     }
 
     switch (keysym) {
