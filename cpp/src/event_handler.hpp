@@ -11,11 +11,13 @@
 
 struct QmlRenderer;
 class KeyboardHandler;
+class PointerHandler;
 
 class EventHandler {
 private:
     QmlRenderer *m_renderer;
     KeyboardHandler *m_keyboardHandler;
+    PointerHandler *m_pointerHandler;
 
 public:
     explicit EventHandler(QmlRenderer *renderer);

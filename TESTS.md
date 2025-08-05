@@ -13,3 +13,5 @@ The `test` directory contains some helpful tests for the renderer.
     - Good for testing graphical effects.
 - `test_keys.qml`
     - For testing keyboard input
+- `test_mouse.qml`
+    - For testing mouse input 

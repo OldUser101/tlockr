@@ -3,6 +3,7 @@
 
 #include "event_handler.hpp"
 #include "keyboard.hpp"
+#include "pointer.hpp"
 #include "render.hpp"
 #include <errno.h>
 #include <iostream>
@@ -28,6 +29,7 @@ int readEvent(int fd, Event *event) {
 
 EventHandler::EventHandler(QmlRenderer *renderer) : m_renderer(renderer) {
     m_keyboardHandler = new KeyboardHandler(renderer);
+    m_pointerHandler = new PointerHandler(renderer, m_keyboardHandler);
 }
 
 EventHandler::~EventHandler() = default;
@@ -37,6 +39,7 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
     switch (event_type) {
         case EventType::KeyboardKeymap: {
             m_keyboardHandler->handleKeymapEvent(param_1, param_2);
+            break;
         }
         case EventType::KeyboardModifiers: {
             // Modifiers bit packed:
@@ -45,10 +48,23 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
             m_keyboardHandler->handleModifiersEvent(
                 param_1 >> 32, param_1 & 0xFFFF, param_2 >> 32,
                 param_2 & 0xFFFF);
+            break;
         }
         case EventType::KeyboardKey: {
             m_keyboardHandler->handleKeyEvent(param_1,
                                               static_cast<KeyState>(param_2));
+            break;
+        }
+        case EventType::PointerMotion: {
+            double surface_x = *reinterpret_cast<const double *>(&param_1);
+            double surface_y = *reinterpret_cast<const double *>(&param_2);
+            m_pointerHandler->handleMotionEvent(surface_x, surface_y);
+            break;
+        }
+        case EventType::PointerButton: {
+            m_pointerHandler->handleButtonEvent(
+                param_1, static_cast<ButtonState>(param_2));
+            break;
         }
     }
     std::cout << "Event Type: " << static_cast<uint64_t>(event_type)

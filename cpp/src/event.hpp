@@ -15,10 +15,14 @@ extern "C" {
 enum class EventType : uint64_t {
     Wayland = 1,
     Renderer = 2,
+
     KeyboardKeymap = 3,
     KeyboardKey = 4,
     KeyboardModifiers = 5,
     KeyboardRepeatInfo = 6,
+
+    PointerMotion = 7,
+    PointerButton = 8,
 };
 
 typedef uint64_t EventParam;

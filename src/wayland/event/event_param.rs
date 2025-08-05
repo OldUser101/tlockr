@@ -65,3 +65,9 @@ impl From<u64> for EventParam {
         EventParam(value)
     }
 }
+
+impl From<f64> for EventParam {
+    fn from(value: f64) -> Self {
+        EventParam(value.to_bits())
+    }
+}

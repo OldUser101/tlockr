@@ -3,21 +3,17 @@
 
 /*
     keyboard.rs:
-        Acquires a keyboard interface and redirects keyboard events to Qt
+        Redirects keyboard events to Qt
 */
 
 use crate::wayland::{
     event::{event::Event, event_param::EventParam, event_type::EventType},
     state::WaylandState,
 };
-
 use std::os::fd::IntoRawFd;
 use wayland_client::{
     Connection, Dispatch, QueueHandle, WEnum,
-    protocol::{
-        wl_keyboard::{self, KeymapFormat, WlKeyboard},
-        wl_seat::{self, Capability, WlSeat},
-    },
+    protocol::wl_keyboard::{self, KeymapFormat, WlKeyboard},
 };
 
 impl Dispatch<WlKeyboard, ()> for WaylandState {
@@ -102,36 +98,6 @@ impl Dispatch<WlKeyboard, ()> for WaylandState {
                         .write_fd(),
                 );
             }
-            _ => {}
-        }
-    }
-}
-
-impl Dispatch<WlSeat, ()> for WaylandState {
-    fn event(
-        state: &mut Self,
-        proxy: &WlSeat,
-        event: <WlSeat as wayland_client::Proxy>::Event,
-        _data: &(),
-        _conn: &Connection,
-        qh: &QueueHandle<Self>,
-    ) {
-        match event {
-            wl_seat::Event::Capabilities { capabilities } => match capabilities {
-                WEnum::Value(bits) => {
-                    if bits.contains(Capability::Keyboard) && state.keyboard.is_none() {
-                        let keyboard = proxy.get_keyboard(qh, ());
-                        state.keyboard = Some(keyboard);
-                        println!("Acquired keyboard input interface.");
-                    } else if !bits.contains(Capability::Keyboard) && state.keyboard.is_some() {
-                        if let Some(ref keyboard) = state.keyboard {
-                            keyboard.release();
-                            state.keyboard = None;
-                        }
-                    }
-                }
-                _ => {}
-            },
             _ => {}
         }
     }
