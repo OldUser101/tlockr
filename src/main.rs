@@ -12,6 +12,8 @@ pub mod wayland;
 
 use std::{env, ffi::CString};
 
+use tracing::{debug, info};
+
 use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,10 +24,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("Invalid number of arguments".into());
     }
 
+    tracing_subscriber::fmt()
+        .with_timer(tracing_subscriber::fmt::time::uptime())
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+
+    let now = chrono::Local::now();
+    info!("tlockr started at {}", now.to_rfc3339());
+
     let qml_path_cstring = CString::new(args[1].clone())?;
     let qml_path_raw = qml_path_cstring.into_raw();
 
-    println!("Initializing Wayland interfaces...");
+    debug!("Initializing Wayland interfaces...");
 
     let mut app_state = ApplicationState::new(qml_path_raw);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
@@ -34,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     state.roundtrip(&mut event_queue)?;
 
-    println!("Wayland interfaces initialized successfully.");
+    debug!("Wayland interfaces initialized successfully.");
 
     state.run_event_loop(&mut event_queue)?;
 

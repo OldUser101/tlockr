@@ -9,6 +9,7 @@
 use crate::wayland::event::event::Event;
 use crate::wayland::state::WaylandState;
 use std::os::raw::c_void;
+use tracing::error;
 use wayland_client::protocol::wl_buffer;
 use wayland_client::protocol::{wl_buffer::WlBuffer, wl_shm::WlShm};
 use wayland_client::{Connection, Dispatch, QueueHandle};
@@ -132,7 +133,7 @@ impl Dispatch<WlBuffer, i32> for WaylandState {
             wl_buffer::Event::Release => {
                 // Release the buffer so it can be used again
                 if let Err(e) = state.buffer_manager.release_buffer(*data as usize) {
-                    println!("{}", e);
+                    error!("{}", e);
                 }
             }
             _ => {}

@@ -10,6 +10,7 @@ use crate::shared::interface::get_renderer;
 use crate::shared::state::State;
 use crate::shared::{ffi::start_renderer, interface::set_state};
 use crate::wayland::state::WaylandState;
+use tracing::{error, info};
 use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
 use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_surface_v1::{self, ExtSessionLockSurfaceV1},
@@ -56,7 +57,7 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
     ) {
         match event {
             ext_session_lock_v1::Event::Locked => {
-                println!("Session is locked");
+                info!("Session is locked");
                 set_state(state.app_state, State::Locked);
                 if let Some(surface) = &state.surface {
                     if let Some(output) = &state.output {
@@ -66,7 +67,7 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
                 }
             }
             ext_session_lock_v1::Event::Finished => {
-                println!("Session is unlocked");
+                info!("Session is unlocked");
                 set_state(state.app_state, State::Unlocked);
             }
             _ => {}
@@ -95,7 +96,7 @@ impl Dispatch<ExtSessionLockSurfaceV1, ()> for WaylandState {
                     if let Some(renderer) = get_renderer(state.app_state) {
                         start_renderer(renderer);
                     } else {
-                        println!("Renderer was None\n");
+                        error!("Renderer was None\n");
                         return;
                     }
                 }
