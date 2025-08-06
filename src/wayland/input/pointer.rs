@@ -6,6 +6,8 @@
         Redirects pointer events to Qt
 */
 
+use std::time::{Duration, Instant};
+
 use crate::wayland::{
     event::{event::Event, event_param::EventParam, event_type::EventType},
     state::WaylandState,
@@ -30,18 +32,40 @@ impl Dispatch<WlPointer, ()> for WaylandState {
                 surface_x,
                 surface_y,
             } => {
+                let mut send_event = false;
                 let event = Event::new(
                     EventType::PointerMotion,
                     EventParam::from(surface_x),
                     EventParam::from(surface_y),
                 );
-                let _ = event.write_to(
-                    wayland_state
-                        .renderer_write_pipe
-                        .as_ref()
-                        .unwrap()
-                        .write_fd(),
-                );
+                let now = Instant::now();
+
+                if wayland_state.pointer_timestamp.is_none() {
+                    wayland_state.pointer_timestamp = Some(now);
+                    send_event = true;
+                }
+
+                let timestamp = wayland_state.pointer_timestamp.unwrap();
+                let delta = now.duration_since(timestamp);
+
+                // Cap motion events at 60 events per second to avoid filling the event queue
+                if delta >= Duration::from_millis(1000 / 60) {
+                    send_event = true;
+                }
+
+                if send_event {
+                    wayland_state.pointer_timestamp = Some(now);
+
+                    let _ = event.write_to(
+                        wayland_state
+                            .renderer_write_pipe
+                            .as_ref()
+                            .unwrap()
+                            .write_fd(),
+                    );
+                } else {
+                    wayland_state.pending_pointer_event = Some(event);
+                }
             }
             wl_pointer::Event::Button {
                 serial: _,
