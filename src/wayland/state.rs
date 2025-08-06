@@ -12,7 +12,9 @@ use crate::shared::state::ApplicationState;
 use crate::shared::{interface::set_state, state::State};
 use crate::wayland::buffer::manager::BufferManager;
 use crate::wayland::communication::pipe::Pipe;
+use crate::wayland::event::event::Event;
 use std::os::fd::AsRawFd;
+use std::time::Instant;
 use wayland_client::EventQueue;
 use wayland_client::protocol::wl_pointer::WlPointer;
 use wayland_client::{
@@ -66,6 +68,9 @@ pub struct WaylandState {
 
     pub renderer_read_pipe: Option<Pipe>,
     pub renderer_write_pipe: Option<Pipe>,
+
+    pub pointer_timestamp: Option<Instant>,
+    pub pending_pointer_event: Option<Event>,
 }
 
 impl WaylandState {
@@ -95,6 +100,8 @@ impl WaylandState {
             app_state: app_state,
             renderer_read_pipe: None,
             renderer_write_pipe: None,
+            pointer_timestamp: None,
+            pending_pointer_event: None,
         }
     }
 
