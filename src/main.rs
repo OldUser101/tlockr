@@ -11,7 +11,6 @@ pub mod shared;
 pub mod wayland;
 
 use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
-use anyhow::Result;
 use nix::libc;
 use std::{env, ffi::CString, fs::OpenOptions, os::fd::AsRawFd};
 use tracing::{Level, debug, error, info};
