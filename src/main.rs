@@ -12,8 +12,16 @@ pub mod wayland;
 
 use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
 use anyhow::Result;
-use std::{env, ffi::CString};
+use nix::libc;
+use std::{env, ffi::CString, fs::OpenOptions, os::fd::AsRawFd};
 use tracing::{Level, debug, error, info};
+
+fn suppress_stderr() {
+    let devnull = OpenOptions::new().write(true).open("/dev/null").unwrap();
+    unsafe {
+        libc::dup2(devnull.as_raw_fd(), libc::STDERR_FILENO);
+    }
+}
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -45,6 +53,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
+    // Supress stderr, since we use our own logging
+    suppress_stderr();
+
     tracing_subscriber::fmt()
         .with_timer(tracing_subscriber::fmt::time::uptime())
         .with_max_level(Level::DEBUG)
