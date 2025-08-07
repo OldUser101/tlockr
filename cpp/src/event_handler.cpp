@@ -3,11 +3,14 @@
 
 #include "event_handler.hpp"
 #include "keyboard.hpp"
+#include "logging.hpp"
 #include "pointer.hpp"
 #include "render.hpp"
 #include <errno.h>
 #include <iostream>
 #include <unistd.h>
+
+static const char *FILENAME = "tlockr_qt/event_handler.cpp";
 
 int readEvent(int fd, Event *event) {
     ssize_t res = read(fd, event, sizeof(Event));
@@ -15,12 +18,15 @@ int readEvent(int fd, Event *event) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return -1;
         } else {
-            std::cerr << "Failed to read event: " << strerror(errno) << "\n";
+            error_log(
+                FILENAME,
+                format_log("Failed to read event: ", strerror(errno)).c_str());
             return -1;
         }
     } else if (res != sizeof(Event)) {
-        std::cerr << "Partial read: expected " << sizeof(Event)
-                  << " bytes, got " << res << "\n";
+        error_log(FILENAME, format_log("Partial read: expected ", sizeof(Event),
+                                       " bytes, got ", res)
+                                .c_str());
         return -1;
     }
 
@@ -67,9 +73,11 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
             break;
         }
     }
-    std::cout << "Event Type: " << static_cast<uint64_t>(event_type)
-              << "; Param 1: " << param_1 << "; Param 2: " << param_2 << "\n";
-    std::cout.flush();
+
+    debug_log(FILENAME,
+              format_log("Event Type: ", static_cast<uint64_t>(event_type),
+                         "; Param 1: ", param_1, "; Param 2: ", param_2)
+                  .c_str());
     return 0;
 }
 

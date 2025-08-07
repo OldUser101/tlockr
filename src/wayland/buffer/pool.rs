@@ -14,6 +14,7 @@ use std::os::{
     fd::{AsFd, AsRawFd, OwnedFd, RawFd},
     raw::c_void,
 };
+use tracing::debug;
 use wayland_client::protocol::wl_shm;
 use wayland_client::protocol::wl_shm_pool::WlShmPool;
 use wayland_client::{EventQueue, QueueHandle};
@@ -123,7 +124,7 @@ impl BufferManager {
             self.allocate_buffer(&pool, &qh, data_ptr)?;
         }
 
-        println!("Allocated {} buffers: {} bytes", n, size);
+        debug!("Allocated {} buffers: {} bytes", n, size);
 
         Ok(())
     }

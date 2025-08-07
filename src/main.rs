@@ -10,11 +10,20 @@
 pub mod shared;
 pub mod wayland;
 
-use std::{env, ffi::CString};
-
 use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
+use anyhow::Result;
+use nix::libc;
+use std::{env, ffi::CString, fs::OpenOptions, os::fd::AsRawFd};
+use tracing::{Level, debug, error, info};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn suppress_stderr() {
+    let devnull = OpenOptions::new().write(true).open("/dev/null").unwrap();
+    unsafe {
+        libc::dup2(devnull.as_raw_fd(), libc::STDERR_FILENO);
+    }
+}
+
+fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
@@ -25,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let qml_path_cstring = CString::new(args[1].clone())?;
     let qml_path_raw = qml_path_cstring.into_raw();
 
-    println!("Initializing Wayland interfaces...");
+    debug!("Initializing Wayland interfaces...");
 
     let mut app_state = ApplicationState::new(qml_path_raw);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
@@ -34,11 +43,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     state.roundtrip(&mut event_queue)?;
 
-    println!("Wayland interfaces initialized successfully.");
+    debug!("Wayland interfaces initialized successfully.");
 
     state.run_event_loop(&mut event_queue)?;
 
     state.destroy_renderer();
 
     Ok(())
+}
+
+fn main() {
+    // Supress stderr, since we use our own logging
+    suppress_stderr();
+
+    tracing_subscriber::fmt()
+        .with_timer(tracing_subscriber::fmt::time::uptime())
+        .with_max_level(Level::DEBUG)
+        .init();
+
+    let now = chrono::Local::now();
+    info!("tlockr started at {}", now.to_rfc3339());
+
+    match run() {
+        Err(e) => {
+            error!("{:?}", e);
+        }
+        _ => {}
+    }
+
+    let now = chrono::Local::now();
+    info!("tlockr exited at {}", now.to_rfc3339())
 }

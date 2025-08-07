@@ -3,12 +3,15 @@
 
 #include "pointer.hpp"
 #include "keyboard.hpp"
+#include "logging.hpp"
 #include "render.hpp"
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QQuickItem>
 #include <QWindow>
 #include <iostream>
+
+static const char *FILENAME = "tlockr_qt/pointer.cpp";
 
 PointerHandler::PointerHandler(QmlRenderer *renderer,
                                KeyboardHandler *keyboardHandler)
@@ -42,7 +45,7 @@ void PointerHandler::sendMouseEvent(QEvent::Type eventType, QPointF globalPos,
                                     Qt::MouseButton button,
                                     Qt::MouseButtons buttons) {
     if (!m_renderer->window) {
-        std::cerr << "No renderer window available\n";
+        error_log(FILENAME, "No renderer window available");
         return;
     }
 
