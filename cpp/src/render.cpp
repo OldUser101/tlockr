@@ -88,6 +88,10 @@ void send_frame_rendered_event(QmlRenderer *renderer, void *buf) {
 void setup_renderer(QmlRenderer *renderer) {
     int argc = 0;
     char **argv = nullptr;
+
+    // Install custom message handler
+    qInstallMessageHandler(qtMessageHandler);
+
     renderer->app = new QGuiApplication(argc, argv);
 
     renderer->context = new QOpenGLContext();

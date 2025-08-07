@@ -22,6 +22,7 @@ add_library(${PROJECT_NAME} STATIC
   src/key_map.cpp
   src/pointer.cpp
   src/button_map.cpp
+  src/logging.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

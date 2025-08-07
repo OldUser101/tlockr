@@ -6,6 +6,10 @@
 #ifndef LOGGING_HPP
 #define LOGGING_HPP
 
+#include <QDebug>
+#include <QMessageLogContext>
+#include <QString>
+#include <QtGlobal>
 #include <sstream>
 
 template <typename... Args> std::string format_log(Args &&...args) {
@@ -13,6 +17,9 @@ template <typename... Args> std::string format_log(Args &&...args) {
     (ss << ... << args);
     return ss.str();
 }
+
+void qtMessageHandler(QtMsgType type, const QMessageLogContext &,
+                      const QString &msg);
 
 #ifdef __cplusplus
 extern "C" {
