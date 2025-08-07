@@ -11,24 +11,17 @@ pub mod shared;
 pub mod wayland;
 
 use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
+use anyhow::Result;
 use std::{env, ffi::CString};
-use tracing::{Level, debug, info};
+use tracing::{Level, debug, error, info};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
         println!("Usage: tlockr <qml path>");
         return Err("Invalid number of arguments".into());
     }
-
-    tracing_subscriber::fmt()
-        .with_timer(tracing_subscriber::fmt::time::uptime())
-        .with_max_level(Level::DEBUG)
-        .init();
-
-    let now = chrono::Local::now();
-    info!("tlockr started at {}", now.to_rfc3339());
 
     let qml_path_cstring = CString::new(args[1].clone())?;
     let qml_path_raw = qml_path_cstring.into_raw();
@@ -49,4 +42,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     state.destroy_renderer();
 
     Ok(())
+}
+
+fn main() {
+    tracing_subscriber::fmt()
+        .with_timer(tracing_subscriber::fmt::time::uptime())
+        .with_max_level(Level::DEBUG)
+        .init();
+
+    let now = chrono::Local::now();
+    info!("tlockr started at {}", now.to_rfc3339());
+
+    match run() {
+        Err(e) => {
+            error!("{:?}", e);
+        }
+        _ => {}
+    }
+
+    let now = chrono::Local::now();
+    info!("tlockr exited at {}", now.to_rfc3339())
 }
