@@ -8,6 +8,9 @@
 
 #include "render.hpp"
 #include "event_handler.hpp"
+#include "logging.hpp"
+
+static const char *FILENAME = "tlockr_qt/render.cpp";
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,7 +26,9 @@ int writeEvent(int fd, EventType event_type, EventParam param_1,
 
     ssize_t res = write(fd, &ev, sizeof(Event));
     if (res != sizeof(Event)) {
-        std::cerr << "Failed to write event: " << strerror(errno) << "\n";
+        error_log(
+            FILENAME,
+            format_log("Failed to write event: ", strerror(errno)).c_str());
         return -1;
     }
 
@@ -59,7 +64,8 @@ void set_initialize(QmlRenderer *renderer) {
 }
 
 void setup_event_socket(QmlRenderer *renderer) {
-    // Set non-blocking I/O on the read file descriptor
+    // Set non-blocking I/O on the read file descriptor, required by
+    // QSocketNotifier
     int fd = renderer->appState->rendererReadFd;
     fcntl(fd, F_SETFL, O_NONBLOCK);
 
@@ -94,7 +100,7 @@ void setup_renderer(QmlRenderer *renderer) {
     renderer->context->setFormat(*renderer->surfaceFormat);
 
     if (!renderer->context->create()) {
-        std::cerr << "Failed to create OpenGL context\n";
+        error_log(FILENAME, "Failed to create offscreen surface");
         set_deinitialize(renderer);
         return;
     }
@@ -104,13 +110,13 @@ void setup_renderer(QmlRenderer *renderer) {
     renderer->surface->create();
 
     if (!renderer->surface->isValid()) {
-        std::cerr << "Failed to create offscreen surface\n";
+        error_log(FILENAME, "Failed to create offscreen surface");
         set_deinitialize(renderer);
         return;
     }
 
     if (!renderer->context->makeCurrent(renderer->surface)) {
-        std::cerr << "Failed to make OpenGL context current\n";
+        error_log(FILENAME, "Failed to make OpenGL context current");
         set_deinitialize(renderer);
         return;
     }
@@ -120,7 +126,7 @@ void setup_renderer(QmlRenderer *renderer) {
     renderer->window->resize(renderer->fbSize);
 
     if (!renderer->renderControl->initialize()) {
-        std::cerr << "Failed to initialize render control\n";
+        error_log(FILENAME, "Failed to initialize render control");
         set_deinitialize(renderer);
         return;
     }
@@ -145,13 +151,13 @@ void setup_renderer_signals(QmlRenderer *renderer) {
             if (renderer->component->status() == QQmlComponent::Ready) {
                 QObject *rootObject = renderer->component->create();
                 if (!rootObject) {
-                    std::cerr << "Failed to create QML root object\n";
+                    error_log(FILENAME, "Failed to create QML root object");
                     return;
                 }
 
                 QQuickItem *rootItem = qobject_cast<QQuickItem *>(rootObject);
                 if (!rootItem) {
-                    std::cerr << "Root object is not a QQuickItem\n";
+                    error_log(FILENAME, "Root object is not a QQuickItem");
                     delete rootObject;
                     return;
                 }
@@ -163,11 +169,12 @@ void setup_renderer_signals(QmlRenderer *renderer) {
                 renderer->rootItem = rootItem;
                 renderer->running = true;
             } else if (renderer->component->status() == QQmlComponent::Error) {
-                std::cerr << "QML Component has errors:" << std::endl;
+                error_log(FILENAME, "QML component has errors:");
                 const auto errors = renderer->component->errors();
                 for (const auto &error : errors) {
-                    std::cerr << "  " << error.toString().toStdString()
-                              << std::endl;
+                    error_log(renderer->appState->qmlPath,
+                              format_log("\t", error.toString().toStdString())
+                                  .c_str());
                 }
             }
         });
@@ -180,7 +187,7 @@ void setup_renderer_signals(QmlRenderer *renderer) {
                 return;
 
             if (!renderer->context->makeCurrent(renderer->surface)) {
-                std::cerr << "Failed to make OpenGL context current\n";
+                error_log(FILENAME, "Failed to make OpenGL context current");
                 return;
             }
 
@@ -233,7 +240,7 @@ void qml_renderer_thread(QmlRenderer *renderer) {
 
 int start_renderer(QmlRenderer *renderer) {
     if (!renderer) {
-        std::cerr << "Invalid renderer\n";
+        error_log(FILENAME, "Invalid renderer");
         return -1;
     }
 
@@ -244,14 +251,14 @@ int start_renderer(QmlRenderer *renderer) {
         lock, [renderer] { return renderer->initialized.load(); });
 
     if (!renderer->initialized) {
-        std::cerr << "Failed to initialize Qt\n";
+        error_log(FILENAME, "Failed to initialize Qt");
         return -1;
     }
 
     QMetaObject::invokeMethod(
         renderer->component,
         [renderer]() {
-            std::cout << "Loading QML component..." << std::endl;
+            info_log(FILENAME, "Loading QML component...");
             renderer->component->loadUrl(
                 QUrl::fromLocalFile(renderer->qmlPath));
         },
@@ -283,6 +290,8 @@ void cleanup_renderer(QmlRenderer *renderer) {
     }
 
     delete renderer;
+
+    info_log("tlockr_qt/render.cpp", "Renderer thread exited");
 }
 
 int render(const QOpenGLFramebufferObject &fbo, void *buffer) {
@@ -293,8 +302,9 @@ int render(const QOpenGLFramebufferObject &fbo, void *buffer) {
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "Original framebuffer incomplete: 0x" << std::hex << status
-                  << "\n";
+        error_log(FILENAME, format_log("Original framebuffer incomplete: 0x",
+                                       std::hex, status)
+                                .c_str());
         return 1;
     }
 
@@ -309,8 +319,9 @@ int render(const QOpenGLFramebufferObject &fbo, void *buffer) {
 
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "glReadPixels failed with error: 0x" << std::hex << error
-                  << std::endl;
+        error_log(FILENAME, format_log("glReadPixels failed with error: 0x",
+                                       std::hex, error)
+                                .c_str());
         return 1;
     }
 

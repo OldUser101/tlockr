@@ -2,12 +2,15 @@
 // Copyright (C) 2025, Nathan Gill
 
 #include "keyboard.hpp"
+#include "logging.hpp"
 #include "render.hpp"
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <iostream>
 #include <sys/mman.h>
 #include <unistd.h>
+
+static const char *FILENAME = "tlockr_qt/keyboard.cpp";
 
 KeyboardHandler::KeyboardHandler(QmlRenderer *renderer)
     : m_renderer(renderer), m_xkbContext(nullptr), m_xkbKeymap(nullptr),
@@ -22,10 +25,10 @@ KeyboardHandler::~KeyboardHandler() {
 void KeyboardHandler::setupXkbContext() {
     m_xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (!m_xkbContext) {
-        std::cerr << "Failed to create XKB context\n";
+        error_log(FILENAME, "Failed to create XKB context");
     }
 
-    std::cout << "Created new XKB context\n";
+    info_log(FILENAME, "Created new XKB context");
 }
 
 void KeyboardHandler::handleKeymapEvent(int fd, uint32_t size) {
@@ -36,7 +39,7 @@ void KeyboardHandler::handleKeymapEvent(int fd, uint32_t size) {
     char *keymap_str =
         static_cast<char *>(mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0));
     if (keymap_str == MAP_FAILED) {
-        std::cerr << "Failed to mmap keymap\n";
+        error_log(FILENAME, "Failed to mmap keymap");
         close(fd);
         return;
     }
@@ -49,7 +52,7 @@ void KeyboardHandler::handleKeymapEvent(int fd, uint32_t size) {
     close(fd);
 
     if (!keymap) {
-        std::cerr << "Failed to create XKB keymap\n";
+        error_log(FILENAME, "Failed to create XKB keymap");
         return;
     }
 
@@ -64,11 +67,11 @@ void KeyboardHandler::handleKeymapEvent(int fd, uint32_t size) {
     m_xkbState = xkb_state_new(keymap);
 
     if (!m_xkbState) {
-        std::cerr << "Failed to create XKB state\n";
+        error_log(FILENAME, "Failed to create XKB state");
         return;
     }
 
-    std::cout << "Loaded new XKB keymap\n";
+    info_log(FILENAME, "Loaded new XKB keymap");
 }
 
 void KeyboardHandler::handleModifiersEvent(uint32_t mods_depressed,
@@ -78,13 +81,13 @@ void KeyboardHandler::handleModifiersEvent(uint32_t mods_depressed,
     if (m_xkbState) {
         xkb_state_update_mask(m_xkbState, mods_depressed, mods_latched,
                               mods_locked, 0, 0, group);
-        std::cout << "Updated modifiers\n";
+        debug_log(FILENAME, "Updated keyboard modifiers");
     }
 }
 
 void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
     if (!m_xkbState) {
-        std::cout << "No XKB state available" << std::endl;
+        warn_log(FILENAME, "No XKB state available");
         return;
     }
 
@@ -134,7 +137,7 @@ void KeyboardHandler::sendKeyEvent(QEvent::Type eventType, Qt::Key key,
     }
 
     if (target) {
-        std::cout << "Sent key event\n";
+        debug_log(FILENAME, "Sent key event");
         QCoreApplication::postEvent(target, event);
     } else {
         delete event;

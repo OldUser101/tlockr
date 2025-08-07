@@ -10,11 +10,9 @@
 pub mod shared;
 pub mod wayland;
 
-use std::{env, ffi::CString};
-
-use tracing::{debug, info};
-
 use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
+use std::{env, ffi::CString};
+use tracing::{Level, debug, info};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -26,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing_subscriber::fmt()
         .with_timer(tracing_subscriber::fmt::time::uptime())
-        .with_max_level(tracing::Level::DEBUG)
+        .with_max_level(Level::DEBUG)
         .init();
 
     let now = chrono::Local::now();
