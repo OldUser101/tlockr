@@ -12,6 +12,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickRenderControl>
@@ -38,6 +39,7 @@
 #include "event.hpp"
 
 class EventHandler;
+class Interface;
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,6 +85,7 @@ struct QmlRenderer {
 
     EventHandler *eventHandler;
     ApplicationState *appState;
+    Interface *interface;
 };
 
 typedef void *(*RsGetBufferCallback)(void *user_data);
