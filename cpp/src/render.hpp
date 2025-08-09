@@ -48,6 +48,8 @@ struct ApplicationState {
     void *renderer;
     int rendererWriteFd;
     int rendererReadFd;
+    int authWriteFd;
+    int authReadFd;
 };
 
 struct QmlRenderer {

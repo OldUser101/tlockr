@@ -52,7 +52,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
-    // Supress stderr, since we use our own logging
+    // Supress stderr, since `tracing` is used instead
     suppress_stderr();
 
     tracing_subscriber::fmt()

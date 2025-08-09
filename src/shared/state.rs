@@ -28,6 +28,8 @@ pub struct ApplicationState {
     pub renderer: *mut QmlRenderer,
     pub renderer_write_fd: c_int,
     pub renderer_read_fd: c_int,
+    pub auth_write_fd: c_int,
+    pub auth_read_fd: c_int,
 }
 
 impl ApplicationState {
@@ -38,6 +40,8 @@ impl ApplicationState {
             renderer: std::ptr::null_mut(),
             renderer_write_fd: -1,
             renderer_read_fd: -1,
+            auth_write_fd: -1,
+            auth_read_fd: -1,
         }
     }
 }

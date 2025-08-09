@@ -23,6 +23,11 @@ enum class EventType : uint64_t {
 
     PointerMotion = 7,
     PointerButton = 8,
+
+    AuthSubmit = 9,
+    AuthPending = 10,
+    AuthFail = 11,
+    AuthSuccess = 12,
 };
 
 typedef uint64_t EventParam;
