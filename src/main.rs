@@ -7,10 +7,15 @@
         various state objects.
 */
 
+pub mod auth;
 pub mod shared;
 pub mod wayland;
 
-use crate::{shared::state::ApplicationState, wayland::state::WaylandState};
+use crate::{
+    auth::state::AuthenticatorState,
+    shared::state::{ApplicationState, ApplicationStatePtr},
+    wayland::state::WaylandState,
+};
 use nix::libc;
 use std::{env, ffi::CString, fs::OpenOptions, os::fd::AsRawFd};
 use tracing::{Level, debug, error, info};
@@ -36,9 +41,33 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     debug!("Initializing Wayland interfaces...");
 
     let mut app_state = ApplicationState::new(qml_path_raw);
+    let app_state_ptr = ApplicationStatePtr::new(&mut app_state as *mut ApplicationState);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
+    let mut auth_state = AuthenticatorState::new(app_state_ptr);
 
     let mut event_queue = state.initialize()?;
+
+    auth_state.initialize(
+        state
+            .renderer_write_pipe
+            .as_ref()
+            .unwrap()
+            .write_fd()
+            .as_raw_fd(),
+    )?;
+
+    let auth_thread = std::thread::spawn(move || {
+        info!("Authentication thread started");
+
+        match auth_state.run_event_loop() {
+            Err(e) => {
+                error!("{:?}", e);
+            }
+            _ => {}
+        }
+
+        info!("Authentication thread exited");
+    });
 
     state.roundtrip(&mut event_queue)?;
 
@@ -47,6 +76,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     state.run_event_loop(&mut event_queue)?;
 
     state.destroy_renderer();
+
+    let _ = auth_thread.join();
 
     Ok(())
 }

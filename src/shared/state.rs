@@ -45,3 +45,21 @@ impl ApplicationState {
         }
     }
 }
+
+/// Pointer wrapper for `ApplicationState` for cross-thread use
+pub struct ApplicationStatePtr(*mut ApplicationState);
+
+unsafe impl Send for ApplicationStatePtr {}
+unsafe impl Sync for ApplicationStatePtr {}
+
+impl ApplicationStatePtr {
+    /// Wrap a `ApplicationState` pointer
+    pub fn new(ptr: *mut ApplicationState) -> Self {
+        Self(ptr)
+    }
+
+    /// Get the stored `ApplicationState` pointer
+    pub fn get(&self) -> *mut ApplicationState {
+        self.0
+    }
+}
