@@ -27,16 +27,11 @@
 #include <GLES2/gl2ext.h>
 
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
-#include <errno.h>
 #include <fcntl.h>
-#include <iostream>
 #include <mutex>
 #include <thread>
 #include <unistd.h>
-
-#include "event.hpp"
 
 class EventHandler;
 class Interface;
@@ -87,8 +82,6 @@ struct QmlRenderer {
     ApplicationState *appState;
     Interface *interface;
 };
-
-typedef void *(*RsGetBufferCallback)(void *user_data);
 
 QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
                                  ApplicationState *appState);
