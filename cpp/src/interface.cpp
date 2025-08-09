@@ -2,6 +2,7 @@
 // Copyright (C) 2025, Nathan Gill
 
 #include "interface.hpp"
+#include "event.hpp"
 #include "logging.hpp"
 #include "render.hpp"
 
@@ -13,5 +14,6 @@ Interface::Interface(QmlRenderer *renderer, QObject *parent)
 Interface::~Interface() = default;
 
 Q_INVOKABLE void Interface::sendMessage(const QString &msg) {
+    writeEvent(m_renderer->appState->authWriteFd, EventType::AuthSubmit, 0, 0);
     info_log(FILENAME, msg.toStdString().c_str());
 }

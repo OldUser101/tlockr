@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "event.hpp"
 #ifndef RENDER_HPP
 #define RENDER_HPP
 
@@ -92,6 +93,8 @@ void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer,
                    void *userData);
 int render(const QOpenGLFramebufferObject &fbo, void *buffer);
 void cleanup_renderer(QmlRenderer *renderer);
+int writeEvent(int fd, EventType event_type, EventParam param_1,
+               EventParam param_2);
 
 #ifdef __cplusplus
 }

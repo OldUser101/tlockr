@@ -49,6 +49,6 @@ safe_setter!(set_state, state, State);
 safe_setter!(set_renderer_read_fd, renderer_read_fd, c_int);
 safe_setter!(set_renderer_write_fd, renderer_write_fd, c_int);
 safe_setter!(set_auth_read_fd, auth_read_fd, c_int);
-safe_setter!(set_auth_write_fd, auth_read_fd, c_int);
+safe_setter!(set_auth_write_fd, auth_write_fd, c_int);
 safe_setter!(set_renderer, renderer, *mut QmlRenderer);
 safe_setter!(set_qml_path, qml_path, *mut c_char);
