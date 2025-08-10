@@ -17,8 +17,16 @@ use crate::{
     wayland::state::WaylandState,
 };
 use nix::libc;
-use std::{env, ffi::CString, fs::OpenOptions, os::fd::AsRawFd};
+use std::{
+    env,
+    ffi::CString,
+    fs::OpenOptions,
+    os::fd::AsRawFd,
+    sync::atomic::{AtomicBool, Ordering},
+};
 use tracing::{Level, debug, error, info};
+
+static AUTH_STOP_FLAG: AtomicBool = AtomicBool::new(false);
 
 fn suppress_stderr() {
     let devnull = OpenOptions::new().write(true).open("/dev/null").unwrap();
@@ -43,7 +51,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut app_state = ApplicationState::new(qml_path_raw);
     let app_state_ptr = ApplicationStatePtr::new(&mut app_state as *mut ApplicationState);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
-    let mut auth_state = AuthenticatorState::new(app_state_ptr);
+    let mut auth_state = AuthenticatorState::new(app_state_ptr, &AUTH_STOP_FLAG);
 
     let mut event_queue = state.initialize()?;
 
@@ -76,6 +84,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     state.run_event_loop(&mut event_queue)?;
 
     state.destroy_renderer();
+
+    AUTH_STOP_FLAG.store(true, Ordering::Relaxed);
 
     let _ = auth_thread.join();
 

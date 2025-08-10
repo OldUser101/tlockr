@@ -17,19 +17,19 @@ pub struct AuthenticatorState {
     pub auth_pipe: Option<Pipe>,
     pub app_state: ApplicationStatePtr,
     pub renderer_fd: RawFd,
-    pub stop_flag: AtomicBool,
+    pub stop_flag: &'static AtomicBool,
 }
 
 impl AuthenticatorState {
     /// Create a new `AuthenticatorState` with a pointer to the global state.
     ///
     /// The global state pointer is held internally for future use.
-    pub fn new(app_state: ApplicationStatePtr) -> Self {
+    pub fn new(app_state: ApplicationStatePtr, stop_flag: &'static AtomicBool) -> Self {
         Self {
             auth_pipe: None,
             app_state: app_state,
             renderer_fd: -1,
-            stop_flag: AtomicBool::new(false),
+            stop_flag,
         }
     }
 
