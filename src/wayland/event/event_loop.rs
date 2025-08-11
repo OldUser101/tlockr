@@ -10,7 +10,8 @@
 use crate::shared::{interface::get_state, state::State};
 use crate::wayland::event::event_type::EventType;
 use crate::wayland::state::WaylandState;
-use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
+use nix::poll::PollTimeout;
+use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags};
 use std::os::fd::BorrowedFd;
 use std::os::fd::{AsRawFd, RawFd};
 use wayland_client::EventQueue;
@@ -132,7 +133,7 @@ impl WaylandState {
 
             let num_events = event_loop
                 .epoll
-                .wait(&mut event_loop.events, EpollTimeout::NONE)?;
+                .wait(&mut event_loop.events, PollTimeout::from(17u16))?;
 
             self.process_epoll_events(&mut event_loop.events, num_events)?
         };
