@@ -12,7 +12,7 @@ use std::{
     sync::atomic::AtomicBool,
 };
 use tracing::{error, info};
-use users::get_current_username;
+use uzers::get_current_username;
 
 /// Holds the state of the authenticator thread
 pub struct AuthenticatorState {
