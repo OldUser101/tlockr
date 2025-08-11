@@ -51,7 +51,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut app_state = ApplicationState::new(qml_path_raw);
     let app_state_ptr = ApplicationStatePtr::new(&mut app_state as *mut ApplicationState);
     let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
-    let mut auth_state = AuthenticatorState::new(app_state_ptr, &AUTH_STOP_FLAG);
+    let mut auth_state =
+        AuthenticatorState::new(app_state_ptr, &AUTH_STOP_FLAG)
+            .ok_or::<Box<dyn std::error::Error>>("Failed to create authenticator state".into())?;
 
     let mut event_queue = state.initialize()?;
 

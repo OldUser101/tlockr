@@ -18,7 +18,8 @@ pub enum State {
     Initialized = 1,
     Ready = 2,
     Locked = 3,
-    Unlocked = 4,
+    Unlocking = 4,
+    Unlocked = 5,
 }
 
 #[repr(C)]

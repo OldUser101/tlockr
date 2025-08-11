@@ -8,16 +8,17 @@
 
 use crate::{
     auth::state::AuthenticatorState,
-    shared::ffi::ForeignBuffer,
+    shared::{ffi::ForeignBuffer, interface::set_state, state::State},
     wayland::event::{event::Event, event_type::EventType},
 };
 use nix::poll::{PollFd, PollFlags, poll};
+use pam::{Client, PamError};
 use std::{
     ffi::{CStr, c_void},
     os::{fd::AsFd, raw::c_char},
     sync::atomic::Ordering,
 };
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 
 impl AuthenticatorState {
     /// Read a single event from the authentictor event pipe
@@ -72,10 +73,22 @@ impl AuthenticatorState {
             }
         }
 
-        Err("poll interrupted unexpected".into())
+        Err("poll interrupted unexpectedly".into())
     }
 
-    pub fn handle_auth_submit(&mut self, event: Event) {
+    fn authenticate(&mut self, password: String) -> Result<(), PamError> {
+        let mut client = Client::with_password("system-auth")?;
+        client
+            .conversation_mut()
+            .set_credentials(self.user.clone(), password);
+        client.authenticate()
+    }
+
+    fn unlock(&mut self) {
+        set_state(self.app_state.get(), State::Unlocking);
+    }
+
+    fn handle_auth_submit(&mut self, event: Event) {
         debug!("Received AuthSubmit event");
 
         let pfbu = event.param_1.raw() as *mut ForeignBuffer;
@@ -86,11 +99,18 @@ impl AuthenticatorState {
 
         let fbu = unsafe { &*pfbu };
 
-        let c_str = unsafe { CStr::from_ptr(fbu.ptr as *const c_char) };
-
-        match c_str.to_str() {
-            Ok(s) => info!("Received: {}", s),
-            Err(e) => warn!("Invalid string received: {}", e),
+        let c_pwd = unsafe { CStr::from_ptr(fbu.ptr as *const c_char) };
+        match c_pwd.to_str() {
+            Ok(password) => match self.authenticate(password.to_string()) {
+                Ok(()) => {
+                    info!("Authentication successful for '{}'", self.user);
+                    self.unlock();
+                }
+                Err(e) => error!("Authentication error: {}", e),
+            },
+            Err(e) => {
+                error!("Invalid password string received: {}", e);
+            }
         }
 
         unsafe {
@@ -107,7 +127,13 @@ impl AuthenticatorState {
         info!("Started authenticator event loop");
 
         while !self.stop_flag.load(Ordering::Relaxed) {
-            self.wait_for_event()?;
+            let r = self.wait_for_event();
+
+            if self.stop_flag.load(Ordering::Relaxed) {
+                break;
+            }
+
+            r?;
 
             let event = self.read_event()?;
 

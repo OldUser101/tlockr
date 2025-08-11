@@ -11,6 +11,8 @@ use std::{
     os::fd::{AsRawFd, RawFd},
     sync::atomic::AtomicBool,
 };
+use tracing::{error, info};
+use users::get_current_username;
 
 /// Holds the state of the authenticator thread
 pub struct AuthenticatorState {
@@ -18,18 +20,32 @@ pub struct AuthenticatorState {
     pub app_state: ApplicationStatePtr,
     pub renderer_fd: RawFd,
     pub stop_flag: &'static AtomicBool,
+    pub user: String,
 }
 
 impl AuthenticatorState {
     /// Create a new `AuthenticatorState` with a pointer to the global state.
     ///
     /// The global state pointer is held internally for future use.
-    pub fn new(app_state: ApplicationStatePtr, stop_flag: &'static AtomicBool) -> Self {
-        Self {
-            auth_pipe: None,
-            app_state: app_state,
-            renderer_fd: -1,
-            stop_flag,
+    ///
+    /// This function also obtains the username this process was run as for
+    /// authentication.
+    pub fn new(app_state: ApplicationStatePtr, stop_flag: &'static AtomicBool) -> Option<Self> {
+        match get_current_username()?.into_string() {
+            Ok(user) => {
+                info!("Running authenticator for: '{}'", user);
+                Some(Self {
+                    auth_pipe: None,
+                    app_state: app_state,
+                    renderer_fd: -1,
+                    stop_flag,
+                    user,
+                })
+            }
+            Err(os_str) => {
+                error!("Failed to convert username string: {:?}", os_str);
+                None
+            }
         }
     }
 
