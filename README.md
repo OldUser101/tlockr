@@ -24,15 +24,15 @@ This makes tlockr much more flexible that other screen lockers, allowing for dyn
 
 tlockr uses a mix of Rust and C++ to achieve this.
 
-The Rust code focuses on the Wayland backend, managing Wayland objects and buffers. It also handles authentication (when it is implemented), and provides interfaces for the C++ frontend.
+The Rust code focuses on the Wayland backend, managing Wayland objects and buffers. It also handles authentication, and provides interfaces for the C++ frontend.
 
 The C++ code focuses on the Qt frontend. It handles the initialization and use of various Qt objects. This involves rendering QML content into an offscreen buffer, which is then copied into a Wayland buffer.
 
 ## How do I use it?
 
-tlockr is not yet ready to be used a screen locker. Since authentication is not yet implemented, you will get locked out if you run it.
+You will need to build it from source, as there are no binary releases yet, see below for build instructions.
 
-However, you can still build it if you feel like it.
+Running tlockr is currently quite simple, just run the compiled binary with the QML file to display as an argument. 
 
 ## How do I build it?
 
@@ -56,7 +56,23 @@ $ cargo build --release
 
 The compiled binary can be found at `target/release/tlockr`.
 
-⚠️ Currently, running the `tlockr` binary will completely lock you out, since authentication is not implemented yet. If you want to test it, it is recommended to run it in a disposable compositor session, which you can kill later.
+## Themes
+
+At the moment, themes are just QML files with a specific structure.
+
+The root of the content should be an `Item`, since the content does not use a window.
+
+tlockr provides interfaces for connecting QML themes with the rest of the application:
+
+- `tlockr.sendAuthSubmit`: submits authentication information, the only argument is the password as a string.
+- Future interface planned...
+
+When tlockr loads QML content, any errors are displayed in the log.
+
+Since tlockr locks you out, if the QML content is invalid, you may not be able to unlock your session.
+To avoid this, when developing themes, it is a good idea to run tlockr in a disposable compositor session and
+pipe the logs back to your main session. That way, if you get locked out, you can safely kill the other
+compositor.
 
 ## Contributing
 
@@ -71,9 +87,7 @@ The recommended workflow for this is:
 
 Any changes you make will need to compile without errors before you will be able to merge your pull request.
 
-Since tlockr is in the early stages of development, all sorts of contributions are welcome. THis includes those that don't directly result from an issue, just make sure you detail exactly what changes you've made.
-
-If you really want to, you can make a draft pull request to discuss your changes as you are working on them.
+If you want to, you can make a draft pull request to discuss your changes as you are working on them.
 
 ## License
 
