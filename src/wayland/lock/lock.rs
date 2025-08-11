@@ -10,7 +10,7 @@ use crate::shared::interface::get_renderer;
 use crate::shared::state::State;
 use crate::shared::{ffi::start_renderer, interface::set_state};
 use crate::wayland::state::WaylandState;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
 use wayland_protocols::ext::session_lock::v1::client::{
     ext_session_lock_surface_v1::{self, ExtSessionLockSurfaceV1},
@@ -44,6 +44,37 @@ impl WaylandState {
 
         Ok(())
     }
+
+    pub fn unlock(
+        &mut self,
+        event_queue: &EventQueue<Self>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let qh = event_queue.handle();
+
+        let session_lock = self
+            .session_lock
+            .as_ref()
+            .ok_or::<Box<dyn std::error::Error>>("Session lock object not set".into())?;
+
+        session_lock.unlock_and_destroy();
+
+        if let Some(session_lock_surface) = &self.session_lock_surface {
+            session_lock_surface.destroy();
+        } else {
+            warn!("Session lock surface object not set");
+        }
+
+        let display = self
+            .display
+            .as_ref()
+            .ok_or::<Box<dyn std::error::Error>>("wl_display not set!".into())?;
+        display.sync(&qh, ());
+
+        info!("Session is unlocked");
+        set_state(self.app_state, State::Unlocked);
+
+        Ok(())
+    }
 }
 
 impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
@@ -67,8 +98,7 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
                 }
             }
             ext_session_lock_v1::Event::Finished => {
-                info!("Session is unlocked");
-                set_state(state.app_state, State::Unlocked);
+                warn!("Compositor requested unlocking, but this is not implemented");
             }
             _ => {}
         }

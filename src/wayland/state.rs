@@ -179,6 +179,9 @@ impl WaylandState {
                 self.initialize_renderer()?;
                 self.lock(event_queue)?;
             }
+            State::Unlocking => {
+                self.unlock(event_queue)?;
+            }
             _ => {}
         }
 

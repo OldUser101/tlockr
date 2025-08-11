@@ -10,8 +10,8 @@ use crate::wayland::state::WaylandState;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::{
-        wl_compositor::WlCompositor, wl_display::WlDisplay, wl_shm::WlShm, wl_shm_pool::WlShmPool,
-        wl_surface::WlSurface,
+        wl_callback::WlCallback, wl_compositor::WlCompositor, wl_display::WlDisplay, wl_shm::WlShm,
+        wl_shm_pool::WlShmPool, wl_surface::WlSurface,
     },
 };
 use wayland_protocols::{
@@ -45,5 +45,6 @@ empty_dispatch! {
     WlSurface,
     WlShm,
     WlShmPool,
-    WpViewport
+    WpViewport,
+    WlCallback
 }
