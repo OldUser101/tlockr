@@ -8,13 +8,16 @@ tlockr is a highly customisable screen locker for Wayland-based compositors.
 
 tlockr is a screen locker for Wayland compositors that support the `ext_session_lock_v1` protocol. 
 
-Popular examples of compositors that support this protocol are:
+Examples of compositors that support this protocol are:
 
-- Sway
-- Hyprland
-- river
-- niri
-- Wayfire
+- [sway](https://github.com/swaywm/sway)
+- [Hyprland](https://github.com/hyprwm/Hyprland)
+- [river](https://codeberg.org/river/river)
+- [niri](https://github.com/YaLTeR/niri)
+- [Wayfire](https://github.com/WayfireWM/wayfire)
+- and others...
+
+Note that not all of these compositors have actually been tested to work with tlockr.
 
 Most other screen lockers (like swaylock) have limited customisability. tlockr addresses this, allowing users to select various QML themes to display.
 
@@ -60,12 +63,12 @@ The compiled binary can be found at `target/release/tlockr`.
 
 At the moment, themes are just QML files with a specific structure.
 
-The root of the content should be an `Item`, since the content does not use a window.
+The root of the content should not be a `Window`, since the content does not use a window. Check out some of the test files in the `test` directory for samples.
 
 tlockr provides interfaces for connecting QML themes with the rest of the application:
 
 - `tlockr.sendAuthSubmit`: submits authentication information, the only argument is the password as a string.
-- Future interface planned...
+- Future interfaces planned...
 
 When tlockr loads QML content, any errors are displayed in the log.
 
