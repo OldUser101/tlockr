@@ -8,6 +8,7 @@
 
 #include "render.hpp"
 #include "event_handler.hpp"
+#include "interface.hpp"
 #include "logging.hpp"
 
 static const char *FILENAME = "tlockr_qt/render.cpp";
@@ -41,6 +42,7 @@ QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
     renderer->fbSize = QSize(width, height);
     renderer->qmlPath = qmlPath;
     renderer->appState = appState;
+    renderer->interface = new Interface(renderer);
 
     renderer->eventHandler = new EventHandler(renderer);
 
@@ -146,6 +148,11 @@ void setup_renderer(QmlRenderer *renderer) {
     renderer->window->setRenderTarget(renderTarget);
 
     renderer->engine = new QQmlEngine();
+
+    // Expose the `tlockr` interface to the QML
+    renderer->engine->rootContext()->setContextProperty("tlockr",
+                                                        renderer->interface);
+
     renderer->component = new QQmlComponent(renderer->engine);
 }
 

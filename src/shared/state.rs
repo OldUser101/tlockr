@@ -18,7 +18,8 @@ pub enum State {
     Initialized = 1,
     Ready = 2,
     Locked = 3,
-    Unlocked = 4,
+    Unlocking = 4,
+    Unlocked = 5,
 }
 
 #[repr(C)]
@@ -28,6 +29,8 @@ pub struct ApplicationState {
     pub renderer: *mut QmlRenderer,
     pub renderer_write_fd: c_int,
     pub renderer_read_fd: c_int,
+    pub auth_write_fd: c_int,
+    pub auth_read_fd: c_int,
 }
 
 impl ApplicationState {
@@ -38,6 +41,26 @@ impl ApplicationState {
             renderer: std::ptr::null_mut(),
             renderer_write_fd: -1,
             renderer_read_fd: -1,
+            auth_write_fd: -1,
+            auth_read_fd: -1,
         }
+    }
+}
+
+/// Pointer wrapper for `ApplicationState` for cross-thread use
+pub struct ApplicationStatePtr(*mut ApplicationState);
+
+unsafe impl Send for ApplicationStatePtr {}
+unsafe impl Sync for ApplicationStatePtr {}
+
+impl ApplicationStatePtr {
+    /// Wrap a `ApplicationState` pointer
+    pub fn new(ptr: *mut ApplicationState) -> Self {
+        Self(ptr)
+    }
+
+    /// Get the stored `ApplicationState` pointer
+    pub fn get(&self) -> *mut ApplicationState {
+        self.0
     }
 }

@@ -8,10 +8,10 @@
 */
 
 use crate::shared::interface::{get_state, set_renderer_read_fd, set_renderer_write_fd};
+use crate::shared::pipe::Pipe;
 use crate::shared::state::ApplicationState;
 use crate::shared::{interface::set_state, state::State};
 use crate::wayland::buffer::manager::BufferManager;
-use crate::wayland::communication::pipe::Pipe;
 use crate::wayland::event::event::Event;
 use std::os::fd::AsRawFd;
 use std::time::Instant;
@@ -178,6 +178,9 @@ impl WaylandState {
                 self.buffer_manager.allocate_buffers(event_queue, 2)?;
                 self.initialize_renderer()?;
                 self.lock(event_queue)?;
+            }
+            State::Unlocking => {
+                self.unlock(event_queue)?;
             }
             _ => {}
         }

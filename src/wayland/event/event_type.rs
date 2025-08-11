@@ -6,7 +6,7 @@
         This file contains the `EventType` enum and conversions
 */
 
-// The type of event that is being handled
+/// The type of event that is being handled
 ///
 /// This enum is C-compatible.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -22,6 +22,11 @@ pub enum EventType {
 
     PointerMotion = 7,
     PointerButton = 8,
+
+    AuthSubmit = 9,
+    AuthPending = 10,
+    AuthFail = 11,
+    AuthSuccess = 12,
 }
 
 impl TryFrom<u64> for EventType {
@@ -40,6 +45,11 @@ impl TryFrom<u64> for EventType {
 
             7 => Ok(EventType::PointerMotion),
             8 => Ok(EventType::PointerButton),
+
+            9 => Ok(EventType::AuthSubmit),
+            10 => Ok(EventType::AuthPending),
+            11 => Ok(EventType::AuthFail),
+            12 => Ok(EventType::AuthSuccess),
             _ => Err("Invalid EventType tag"),
         }
     }

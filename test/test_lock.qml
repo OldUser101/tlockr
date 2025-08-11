@@ -78,6 +78,10 @@ Rectangle {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
+
+                onClicked: {
+                    tlockr.sendAuthSubmit(passwordInput.text)
+                }
             }
         }
     }

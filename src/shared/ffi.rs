@@ -40,3 +40,23 @@ unsafe extern "C" {
 
     pub fn cleanup_renderer(renderer: *mut QmlRenderer);
 }
+
+/// `ForeignBuffer` structure for sending and receiving buffers safely from
+/// threads written in languages other than Rust.
+///
+/// The `dealloc` member of this struct is a function pointer to the
+/// deallocator to use to avoid undefined behaviour.
+#[repr(C)]
+pub struct ForeignBuffer {
+    pub ptr: *mut u8,
+    pub len: usize,
+    pub dealloc: Option<extern "C" fn(*mut c_void)>,
+}
+
+impl Drop for ForeignBuffer {
+    fn drop(&mut self) {
+        if let Some(d) = self.dealloc {
+            d(self.ptr as *mut c_void);
+        }
+    }
+}

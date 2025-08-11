@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "event.hpp"
 #ifndef RENDER_HPP
 #define RENDER_HPP
 
@@ -12,6 +13,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickRenderControl>
@@ -26,18 +28,14 @@
 #include <GLES2/gl2ext.h>
 
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
-#include <errno.h>
 #include <fcntl.h>
-#include <iostream>
 #include <mutex>
 #include <thread>
 #include <unistd.h>
 
-#include "event.hpp"
-
 class EventHandler;
+class Interface;
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,6 +49,8 @@ struct ApplicationState {
     void *renderer;
     int rendererWriteFd;
     int rendererReadFd;
+    int authWriteFd;
+    int authReadFd;
 };
 
 struct QmlRenderer {
@@ -83,9 +83,8 @@ struct QmlRenderer {
 
     EventHandler *eventHandler;
     ApplicationState *appState;
+    Interface *interface;
 };
-
-typedef void *(*RsGetBufferCallback)(void *user_data);
 
 QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
                                  ApplicationState *appState);
@@ -94,6 +93,8 @@ void set_callbacks(QmlRenderer *renderer, RsGetBufferCallback getBuffer,
                    void *userData);
 int render(const QOpenGLFramebufferObject &fbo, void *buffer);
 void cleanup_renderer(QmlRenderer *renderer);
+int writeEvent(int fd, EventType event_type, EventParam param_1,
+               EventParam param_2);
 
 #ifdef __cplusplus
 }
