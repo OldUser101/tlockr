@@ -11,7 +11,7 @@ void c_free(void *p) { std::free(p); }
 
 /// Create a `ForeignBuffer` from a buffer pointer
 ForeignBuffer *build_ffi_buffer(void *buf, size_t len) {
-    void *data = std::malloc(len);
+    void *data = std::malloc(len + 1);
 
     if (data == nullptr) {
         error_log(
@@ -21,6 +21,9 @@ ForeignBuffer *build_ffi_buffer(void *buf, size_t len) {
     }
 
     std::memcpy(data, buf, len);
+
+    char *cdata = static_cast<char *>(data);
+    cdata[len] = '\0';
 
     ForeignBuffer *fb =
         static_cast<ForeignBuffer *>(std::malloc(sizeof(ForeignBuffer)));

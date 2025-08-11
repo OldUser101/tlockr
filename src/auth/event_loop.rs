@@ -8,11 +8,16 @@
 
 use crate::{
     auth::state::AuthenticatorState,
+    shared::ffi::ForeignBuffer,
     wayland::event::{event::Event, event_type::EventType},
 };
 use nix::poll::{PollFd, PollFlags, poll};
-use std::{os::fd::AsFd, sync::atomic::Ordering};
-use tracing::info;
+use std::{
+    ffi::{CStr, c_void},
+    os::{fd::AsFd, raw::c_char},
+    sync::atomic::Ordering,
+};
+use tracing::{debug, info, warn};
 
 impl AuthenticatorState {
     /// Read a single event from the authentictor event pipe
@@ -70,6 +75,33 @@ impl AuthenticatorState {
         Err("poll interrupted unexpected".into())
     }
 
+    pub fn handle_auth_submit(&mut self, event: Event) {
+        debug!("Received AuthSubmit event");
+
+        let pfbu = event.param_1.raw() as *mut ForeignBuffer;
+        if pfbu.is_null() {
+            warn!("AuthSubmit contained NULL pointer");
+            return;
+        }
+
+        let fbu = unsafe { &*pfbu };
+
+        let c_str = unsafe { CStr::from_ptr(fbu.ptr as *const c_char) };
+
+        match c_str.to_str() {
+            Ok(s) => info!("Received: {}", s),
+            Err(e) => warn!("Invalid string received: {}", e),
+        }
+
+        unsafe {
+            std::ptr::drop_in_place(pfbu);
+
+            if let Some(d) = (*pfbu).dealloc {
+                d(pfbu as *mut c_void);
+            }
+        }
+    }
+
     /// Run the authenticator event loop until `stop_flag` is set
     pub fn run_event_loop(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         info!("Started authenticator event loop");
@@ -80,7 +112,7 @@ impl AuthenticatorState {
             let event = self.read_event()?;
 
             if event.event_type == EventType::AuthSubmit {
-                info!("Received AuthSubmit event");
+                self.handle_auth_submit(event);
             }
         }
 

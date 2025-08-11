@@ -24,6 +24,7 @@ add_library(${PROJECT_NAME} STATIC
   src/button_map.cpp
   src/logging.cpp
   src/interface.cpp
+  src/ffi.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

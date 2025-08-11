@@ -80,7 +80,7 @@ Rectangle {
                 }
 
                 onClicked: {
-                    tlockr.sendMessage("message sent from QML button")
+                    tlockr.sendAuthSubmit(passwordInput.text)
                 }
             }
         }

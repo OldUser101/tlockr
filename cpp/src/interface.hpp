@@ -20,7 +20,7 @@ public:
     explicit Interface(QmlRenderer *renderer, QObject *parent = nullptr);
     ~Interface();
 
-    Q_INVOKABLE void sendMessage(const QString &msg);
+    Q_INVOKABLE void sendAuthSubmit(const QString &msg);
 };
 
 #endif
