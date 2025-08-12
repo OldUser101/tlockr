@@ -76,6 +76,7 @@ impl AuthenticatorState {
         Err("poll interrupted unexpectedly".into())
     }
 
+    /// Attempt to authenticate the current user with the specified password
     fn authenticate(&mut self, password: String) -> Result<(), PamError> {
         let mut client = Client::with_password("system-auth")?;
         client
@@ -84,10 +85,16 @@ impl AuthenticatorState {
         client.authenticate()
     }
 
+    /// Set the application state to unlocking, to allow the Wayland thread
+    /// to release the screen lock, and clear up.
     fn unlock(&mut self) {
         set_state(self.app_state.get(), State::Unlocking);
     }
 
+    /// Handle a received AuthSubmit event
+    ///
+    /// This routine takes a received event and attempts to authenticate
+    /// the current user based on the event-provided password.
     fn handle_auth_submit(&mut self, event: Event) {
         debug!("Received AuthSubmit event");
 
@@ -114,8 +121,10 @@ impl AuthenticatorState {
         }
 
         unsafe {
+            // Drop the object, freeing the internal buffer...
             std::ptr::drop_in_place(pfbu);
 
+            // ...and then deallocate the object itself.
             if let Some(d) = (*pfbu).dealloc {
                 d(pfbu as *mut c_void);
             }
