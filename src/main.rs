@@ -26,8 +26,10 @@ use std::{
 };
 use tracing::{Level, debug, error, info};
 
+/// Flag that signals the authentication thread to exit
 static AUTH_STOP_FLAG: AtomicBool = AtomicBool::new(false);
 
+/// Redirect stderr to /dev/null
 fn suppress_stderr() {
     let devnull = OpenOptions::new().write(true).open("/dev/null").unwrap();
     unsafe {
@@ -35,6 +37,9 @@ fn suppress_stderr() {
     }
 }
 
+/// Run tlockr
+///
+/// This function is called by main to allow for better handling of errors
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
 
@@ -57,6 +62,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut event_queue = state.initialize()?;
 
+    // TODO: Store pipe fd in ApplicationState
     auth_state.initialize(
         state
             .renderer_write_pipe

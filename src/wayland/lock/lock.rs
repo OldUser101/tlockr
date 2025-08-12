@@ -45,6 +45,11 @@ impl WaylandState {
         Ok(())
     }
 
+    /// Unlock the session
+    ///
+    /// This function unlocks the session and destroys the lock surface.
+    /// It also sets the application state to unlocked, to exit the event
+    /// loop.
     pub fn unlock(
         &mut self,
         event_queue: &EventQueue<Self>,
@@ -98,6 +103,7 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
                 }
             }
             ext_session_lock_v1::Event::Finished => {
+                // TODO: Call `unlock` with the queue handle
                 warn!("Compositor requested unlocking, but this is not implemented");
             }
             _ => {}
