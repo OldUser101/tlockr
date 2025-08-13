@@ -24,9 +24,7 @@ pub enum EventType {
     PointerButton = 8,
 
     AuthSubmit = 9,
-    AuthPending = 10,
-    AuthFail = 11,
-    AuthSuccess = 12,
+    AuthStateUpdate = 10,
 }
 
 impl TryFrom<u64> for EventType {
@@ -47,9 +45,7 @@ impl TryFrom<u64> for EventType {
             8 => Ok(EventType::PointerButton),
 
             9 => Ok(EventType::AuthSubmit),
-            10 => Ok(EventType::AuthPending),
-            11 => Ok(EventType::AuthFail),
-            12 => Ok(EventType::AuthSuccess),
+            10 => Ok(EventType::AuthStateUpdate),
             _ => Err("Invalid EventType tag"),
         }
     }

@@ -7,12 +7,39 @@
 */
 
 use crate::shared::{interface::set_auth_write_fd, pipe::Pipe, state::ApplicationStatePtr};
+use crate::wayland::event::event::Event;
+use crate::wayland::event::event_param::EventParam;
+use crate::wayland::event::event_type::EventType;
 use std::{
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd},
     sync::atomic::AtomicBool,
 };
 use tracing::{error, info};
 use uzers::get_current_username;
+
+/// State enum sent for AuthStateUpdate events
+///
+/// This enum is C-compatible
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u64)]
+pub enum AuthState {
+    Pending = 0,
+    Failed = 1,
+    Success = 2,
+}
+
+impl TryFrom<u64> for AuthState {
+    type Error = &'static str;
+
+    fn try_from(tag: u64) -> Result<Self, Self::Error> {
+        match tag {
+            0 => Ok(AuthState::Pending),
+            1 => Ok(AuthState::Failed),
+            2 => Ok(AuthState::Success),
+            _ => Err("Unknown AuthState tag"),
+        }
+    }
+}
 
 /// Holds the state of the authenticator thread
 pub struct AuthenticatorState {
@@ -47,6 +74,23 @@ impl AuthenticatorState {
                 None
             }
         }
+    }
+
+    /// Send an AuthStateUpdate event to the renderer to indicate the
+    /// authentication state has changed.
+    ///
+    /// This function can return an error if it fails to write an event.
+    pub fn send_state_update(
+        &mut self,
+        state: AuthState,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let event = Event::new(
+            EventType::AuthStateUpdate,
+            EventParam::from(state as u64),
+            EventParam::from(0u64),
+        );
+        let fd = unsafe { OwnedFd::from_raw_fd(self.renderer_fd) };
+        event.write_to(&fd)
     }
 
     /// Initialize this `AuthenticatorState` object

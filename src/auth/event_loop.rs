@@ -98,9 +98,12 @@ impl AuthenticatorState {
     fn handle_auth_submit(&mut self, event: Event) {
         debug!("Received AuthSubmit event");
 
+        let _ = self.send_state_update(super::state::AuthState::Pending);
+
         let pfbu = event.param_1.raw() as *mut ForeignBuffer;
         if pfbu.is_null() {
             warn!("AuthSubmit contained NULL pointer");
+            let _ = self.send_state_update(crate::auth::state::AuthState::Failed);
             return;
         }
 
@@ -111,12 +114,17 @@ impl AuthenticatorState {
             Ok(password) => match self.authenticate(password.to_string()) {
                 Ok(()) => {
                     info!("Authentication successful for '{}'", self.user);
+                    let _ = self.send_state_update(super::state::AuthState::Success);
                     self.unlock();
                 }
-                Err(e) => error!("Authentication error: {}", e),
+                Err(e) => {
+                    error!("Authentication error: {}", e);
+                    let _ = self.send_state_update(crate::auth::state::AuthState::Failed);
+                }
             },
             Err(e) => {
                 error!("Invalid password string received: {}", e);
+                let _ = self.send_state_update(crate::auth::state::AuthState::Failed);
             }
         }
 
