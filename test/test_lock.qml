@@ -94,4 +94,11 @@ Rectangle {
         color: "#666666"
         font.pixelSize: 12
     }
+
+    Connections {
+        target: tlockr
+        function onAuthStateChange(state) {
+            console.log(`Updated state: ${state}`)
+        }
+    }
 }

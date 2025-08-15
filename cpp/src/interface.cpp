@@ -22,3 +22,4 @@ Q_INVOKABLE void Interface::sendAuthSubmit(const QString &msg) {
                reinterpret_cast<EventParam>(fbu), 0);
     debug_log(FILENAME, "Sent AuthSubmit event to authenticator");
 }
+

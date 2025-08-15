@@ -2,6 +2,7 @@
 // Copyright (C) 2025, Nathan Gill
 
 #include "event_handler.hpp"
+#include "interface.hpp"
 #include "keyboard.hpp"
 #include "logging.hpp"
 #include "pointer.hpp"
@@ -73,6 +74,8 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
             break;
         }
         case EventType::AuthStateUpdate: {
+            emit m_renderer->interface->authStateChange(
+                static_cast<Interface::AuthState>(param_1));
             debug_log(
                 FILENAME,
                 format_log("Received AuthStateUpdate: ", param_1).c_str());
