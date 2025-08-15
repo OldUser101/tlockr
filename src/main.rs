@@ -16,7 +16,7 @@ use crate::{
     shared::state::{ApplicationState, ApplicationStatePtr},
     wayland::state::WaylandState,
 };
-use nix::{libc};
+use nix::libc;
 use std::{
     env,
     ffi::CString,

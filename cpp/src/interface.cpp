@@ -23,3 +23,19 @@ Q_INVOKABLE void Interface::sendAuthSubmit(const QString &msg) {
     debug_log(FILENAME, "Sent AuthSubmit event to authenticator");
 }
 
+Q_INVOKABLE void Interface::debug(const QString &msg) {
+    debug_log(m_renderer->appState->qmlPath, msg.toStdString().c_str());
+}
+
+Q_INVOKABLE void Interface::info(const QString &msg) {
+    info_log(m_renderer->appState->qmlPath, msg.toStdString().c_str());
+}
+
+Q_INVOKABLE void Interface::warn(const QString &msg) {
+    warn_log(m_renderer->appState->qmlPath, msg.toStdString().c_str());
+}
+
+Q_INVOKABLE void Interface::error(const QString &msg) {
+    error_log(m_renderer->appState->qmlPath, msg.toStdString().c_str());
+}
+

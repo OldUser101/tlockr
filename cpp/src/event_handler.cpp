@@ -76,9 +76,6 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
         case EventType::AuthStateUpdate: {
             emit m_renderer->interface->authStateChange(
                 static_cast<Interface::AuthState>(param_1));
-            debug_log(
-                FILENAME,
-                format_log("Received AuthStateUpdate: ", param_1).c_str());
             break;
         }
     }
