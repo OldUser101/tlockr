@@ -36,6 +36,12 @@ typedef struct {
     EventParam param_2;
 } Event;
 
+enum class AuthState : uint64_t {
+    Pending = 0,
+    Failed = 1,
+    Success = 2,
+};
+
 #ifdef __cplusplus
 }
 #endif

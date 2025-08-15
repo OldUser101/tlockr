@@ -72,6 +72,12 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
                 param_1, static_cast<ButtonState>(param_2));
             break;
         }
+        case EventType::AuthStateUpdate: {
+            debug_log(
+                FILENAME,
+                format_log("Received AuthStateUpdate: ", param_1).c_str());
+            break;
+        }
     }
 
     debug_log(FILENAME,
