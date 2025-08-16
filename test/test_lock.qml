@@ -98,7 +98,7 @@ Rectangle {
     Connections {
         target: tlockr
         function onAuthStateChange(state) {
-            console.log(`Updated state: ${state}`)
+            tlockr.info(`Updated state: ${state}`)
         }
     }
 }
