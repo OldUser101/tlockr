@@ -21,6 +21,21 @@ public:
     ~Interface();
 
     Q_INVOKABLE void sendAuthSubmit(const QString &msg);
+    
+    Q_INVOKABLE void debug(const QString &msg);
+    Q_INVOKABLE void info(const QString &msg);
+    Q_INVOKABLE void warn(const QString &msg);
+    Q_INVOKABLE void error(const QString &msg);
+
+    enum AuthState {
+        Pending = 0,
+        Failed = 1,
+        Success = 2,
+    };
+    Q_ENUM(AuthState)
+
+signals:
+    void authStateChange(AuthState state);
 };
 
 #endif

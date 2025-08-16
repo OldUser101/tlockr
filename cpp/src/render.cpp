@@ -42,7 +42,6 @@ QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
     renderer->fbSize = QSize(width, height);
     renderer->qmlPath = qmlPath;
     renderer->appState = appState;
-    renderer->interface = new Interface(renderer);
 
     renderer->eventHandler = new EventHandler(renderer);
 
@@ -148,6 +147,8 @@ void setup_renderer(QmlRenderer *renderer) {
     renderer->window->setRenderTarget(renderTarget);
 
     renderer->engine = new QQmlEngine();
+
+    renderer->interface = new Interface(renderer);
 
     // Expose the `tlockr` interface to the QML
     renderer->engine->rootContext()->setContextProperty("tlockr",

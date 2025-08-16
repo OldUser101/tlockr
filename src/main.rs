@@ -63,14 +63,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut event_queue = state.initialize()?;
 
     // TODO: Store pipe fd in ApplicationState
-    auth_state.initialize(
-        state
-            .renderer_write_pipe
-            .as_ref()
-            .unwrap()
-            .write_fd()
-            .as_raw_fd(),
-    )?;
+    auth_state.initialize(state.renderer_write_pipe.as_ref().unwrap().write_fd())?;
 
     let auth_thread = std::thread::spawn(move || {
         info!("Authentication thread started");
