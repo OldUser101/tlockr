@@ -21,7 +21,7 @@ public:
     ~Interface();
 
     Q_INVOKABLE void sendAuthSubmit(const QString &msg);
-    
+
     Q_INVOKABLE void debug(const QString &msg);
     Q_INVOKABLE void info(const QString &msg);
     Q_INVOKABLE void warn(const QString &msg);
