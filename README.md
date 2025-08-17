@@ -81,6 +81,9 @@ To avoid this, when developing themes, it is a good idea to run tlockr in a disp
 pipe the logs back to your main session. That way, if you get locked out, you can safely kill the other
 compositor.
 
+A basic theme is included with tlockr, inspired by [where-is-my-sddm-theme](https://github.com/stepanzubkov/where-is-my-sddm-theme). This includes light and dark variants,
+both can be found in the `themes` directory of this repository.
+
 ## Contributing
 
 Contributions to tlockr are always welcome!
