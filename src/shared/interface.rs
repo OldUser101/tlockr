@@ -44,6 +44,8 @@ safe_getter!(get_auth_read_fd, auth_read_fd, c_int);
 safe_getter!(get_auth_write_fd, auth_write_fd, c_int);
 safe_getter!(get_renderer, renderer, *mut QmlRenderer);
 safe_getter!(get_qml_path, qml_path, *mut c_char);
+safe_getter!(get_output_width, output_width, c_int);
+safe_getter!(get_output_height, output_height, c_int);
 
 safe_setter!(set_state, state, State);
 safe_setter!(set_renderer_read_fd, renderer_read_fd, c_int);
@@ -52,3 +54,5 @@ safe_setter!(set_auth_read_fd, auth_read_fd, c_int);
 safe_setter!(set_auth_write_fd, auth_write_fd, c_int);
 safe_setter!(set_renderer, renderer, *mut QmlRenderer);
 safe_setter!(set_qml_path, qml_path, *mut c_char);
+safe_setter!(set_output_width, output_width, c_int);
+safe_setter!(set_output_height, output_height, c_int);

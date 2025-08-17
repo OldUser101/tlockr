@@ -51,6 +51,8 @@ struct ApplicationState {
     int rendererReadFd;
     int authWriteFd;
     int authReadFd;
+    int outputWidth;
+    int outputHeight;
 };
 
 struct QmlRenderer {

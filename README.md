@@ -70,6 +70,8 @@ tlockr provides interfaces for connecting QML themes with the rest of the applic
 - `tlockr.sendAuthSubmit`: submits authentication information, the only argument is the password as a string.
 - `tlockr.{debug,info,warn,error}`: logging functions that send log messages (as strings) to the `tlockr` logger.
 - `tlockr.onAuthStateChange`: signal emitted when the authentication state changes, the state is passed.
+- `tlockr.Width`: width of display output in pixels.
+- `tlockr.Height`: height of displat output in pixels.
 - Future interfaces planned...
 
 When tlockr loads QML content, any errors are displayed in the log.
@@ -78,6 +80,9 @@ Since tlockr locks you out, if the QML content is invalid, you may not be able t
 To avoid this, when developing themes, it is a good idea to run tlockr in a disposable compositor session and
 pipe the logs back to your main session. That way, if you get locked out, you can safely kill the other
 compositor.
+
+A basic theme is included with tlockr, inspired by [where-is-my-sddm-theme](https://github.com/stepanzubkov/where-is-my-sddm-theme). This includes light and dark variants,
+both can be found in the `themes` directory of this repository.
 
 ## Contributing
 

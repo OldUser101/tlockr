@@ -31,6 +31,8 @@ pub struct ApplicationState {
     pub renderer_read_fd: c_int,
     pub auth_write_fd: c_int,
     pub auth_read_fd: c_int,
+    pub output_width: c_int,
+    pub output_height: c_int,
 }
 
 impl ApplicationState {
@@ -43,6 +45,8 @@ impl ApplicationState {
             renderer_read_fd: -1,
             auth_write_fd: -1,
             auth_read_fd: -1,
+            output_width: -1,
+            output_height: -1,
         }
     }
 }
