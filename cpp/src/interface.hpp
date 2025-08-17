@@ -13,6 +13,9 @@ struct QmlRenderer;
 
 class Interface : public QObject {
     Q_OBJECT
+    Q_PROPERTY(int Width READ outputWidth CONSTANT)
+    Q_PROPERTY(int Height READ outputHeight CONSTANT)
+
 private:
     QmlRenderer *m_renderer;
 
@@ -26,6 +29,9 @@ public:
     Q_INVOKABLE void info(const QString &msg);
     Q_INVOKABLE void warn(const QString &msg);
     Q_INVOKABLE void error(const QString &msg);
+
+    int outputWidth() const;
+    int outputHeight() const;
 
     enum AuthState {
         Pending = 0,

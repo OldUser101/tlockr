@@ -39,3 +39,8 @@ Q_INVOKABLE void Interface::error(const QString &msg) {
     error_log(m_renderer->appState->qmlPath, msg.toStdString().c_str());
 }
 
+int Interface::outputWidth() const { return m_renderer->appState->outputWidth; }
+
+int Interface::outputHeight() const {
+    return m_renderer->appState->outputHeight;
+}

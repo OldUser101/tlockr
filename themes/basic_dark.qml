@@ -27,12 +27,8 @@ Rectangle {
 
     Item {
         id: mainFrame
-
-        // Don't hardcode these
-        x: 0
-        y: 0
-        width: 1920
-        height: 1200
+        width: tlockr.Width
+        height: tlockr.Height
         
         Rectangle {
             id: background

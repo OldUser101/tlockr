@@ -6,6 +6,7 @@
         Contains a dispatch method to obtain the output display dimensions.
 */
 
+use crate::shared::interface::{set_output_height, set_output_width};
 use crate::wayland::state::WaylandState;
 use tracing::debug;
 use wayland_client::{
@@ -33,6 +34,9 @@ impl Dispatch<WlOutput, ()> for WaylandState {
                     debug!("Output mode: {} x {} pixels", width, height);
                     state.width = width;
                     state.height = height;
+
+                    set_output_width(state.app_state, width);
+                    set_output_height(state.app_state, height);
                 }
             }
             wl_output::Event::Done => {
