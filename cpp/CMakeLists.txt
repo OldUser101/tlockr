@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME} STATIC
   src/logging.cpp
   src/interface.cpp
   src/ffi.cpp
+  src/keyboard_repeat.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

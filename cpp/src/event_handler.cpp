@@ -4,6 +4,7 @@
 #include "event_handler.hpp"
 #include "interface.hpp"
 #include "keyboard.hpp"
+#include "keyboard_repeat.hpp"
 #include "logging.hpp"
 #include "pointer.hpp"
 #include "render.hpp"
@@ -34,7 +35,9 @@ int readEvent(int fd, Event *event) {
     return 0;
 }
 
-EventHandler::EventHandler(QmlRenderer *renderer) : m_renderer(renderer) {
+EventHandler::EventHandler(QmlRenderer *renderer,
+                           KeyboardRepeatEngine *keyboardRepeatEngine)
+    : m_renderer(renderer), m_keyboardRepeatEngine(keyboardRepeatEngine) {
     m_keyboardHandler = new KeyboardHandler(renderer);
     m_pointerHandler = new PointerHandler(renderer, m_keyboardHandler);
 }
@@ -63,7 +66,7 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
             break;
         }
         case EventType::KeyboardRepeatInfo: {
-            m_keyboardHandler->handleRepeatInfoEvent(param_1, param_2);
+            m_keyboardRepeatEngine->setRepeatInfo(param_1, param_2);
             break;
         }
         case EventType::PointerMotion: {
@@ -80,6 +83,9 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
         case EventType::AuthStateUpdate: {
             emit m_renderer->interface->authStateChange(
                 static_cast<Interface::AuthState>(param_1));
+            break;
+        }
+        default: {
             break;
         }
     }

@@ -12,15 +12,18 @@
 struct QmlRenderer;
 class KeyboardHandler;
 class PointerHandler;
+class KeyboardRepeatEngine;
 
 class EventHandler {
 private:
     QmlRenderer *m_renderer;
     KeyboardHandler *m_keyboardHandler;
     PointerHandler *m_pointerHandler;
+    KeyboardRepeatEngine *m_keyboardRepeatEngine;
 
 public:
-    explicit EventHandler(QmlRenderer *renderer);
+    explicit EventHandler(QmlRenderer *renderer,
+                          KeyboardRepeatEngine *keyboardRepeatEngine);
     ~EventHandler();
 
     int processEvent(EventType event_type, EventParam param_1,

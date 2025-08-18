@@ -9,6 +9,7 @@
 #include "render.hpp"
 #include "event_handler.hpp"
 #include "interface.hpp"
+#include "keyboard_repeat.hpp"
 #include "logging.hpp"
 
 static const char *FILENAME = "tlockr_qt/render.cpp";
@@ -43,7 +44,9 @@ QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
     renderer->qmlPath = qmlPath;
     renderer->appState = appState;
 
-    renderer->eventHandler = new EventHandler(renderer);
+    renderer->keyboardRepeatEngine = new KeyboardRepeatEngine(renderer);
+    renderer->eventHandler =
+        new EventHandler(renderer, renderer->keyboardRepeatEngine);
 
     return renderer;
 }

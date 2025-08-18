@@ -120,13 +120,6 @@ void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
     }
 }
 
-void KeyboardHandler::handleRepeatInfoEvent(int32_t rate, int32_t delay) {
-    m_repeatInfo.rate = rate;
-    m_repeatInfo.delay = delay;
-
-    debug_log(FILENAME, "Updated repeat info");
-}
-
 void KeyboardHandler::sendKeyEvent(QEvent::Type eventType, Qt::Key key,
                                    Qt::KeyboardModifiers modifiers,
                                    const QString &text) {
