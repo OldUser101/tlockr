@@ -15,7 +15,9 @@ static const char *FILENAME = "tlockr_qt/keyboard.cpp";
 
 KeyboardHandler::KeyboardHandler(QmlRenderer *renderer)
     : m_renderer(renderer), m_xkbContext(nullptr), m_xkbKeymap(nullptr),
-      m_xkbState(nullptr) {}
+      m_xkbState(nullptr) {
+    renderer->keyboardRepeatEngine->setCallback([this] { sendLastPress(); });
+}
 
 KeyboardHandler::~KeyboardHandler() {
     if (m_xkbContext) {
@@ -117,16 +119,22 @@ void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
     if (state == KeyState::Pressed) {
         sendKeyEvent(QEvent::KeyPress, key, modifiers, text);
 
-        if (m_renderer->keyboardRepeatEngine->state()) {
-            m_renderer->keyboardRepeatEngine->reset();
-        }
+        m_lastPress.key = key;
+        m_lastPress.modifiers = modifiers;
+        m_lastPress.text = text;
 
+        m_renderer->keyboardRepeatEngine->reset();
         m_renderer->keyboardRepeatEngine->set();
     } else if (state == KeyState::Released) {
         sendKeyEvent(QEvent::KeyRelease, key, modifiers, text);
 
         m_renderer->keyboardRepeatEngine->reset();
     }
+}
+
+void KeyboardHandler::sendLastPress() {
+    sendKeyEvent(QEvent::KeyPress, m_lastPress.key, m_lastPress.modifiers,
+                 m_lastPress.text);
 }
 
 void KeyboardHandler::sendKeyEvent(QEvent::Type eventType, Qt::Key key,

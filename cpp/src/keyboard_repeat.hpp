@@ -8,6 +8,7 @@
 
 #include <QTimer>
 #include <cstdint>
+#include <functional>
 
 struct QmlRenderer;
 
@@ -21,8 +22,11 @@ private:
     QmlRenderer *m_renderer;
     RepeatInfo *m_repeatInfo = nullptr;
     QTimer *m_timer = nullptr;
+    QTimer *m_delayTimer = nullptr;
 
     bool m_running = false;
+
+    std::function<void()> m_callback;
 
     void tryStart();
     void timeout();
@@ -32,6 +36,7 @@ public:
     ~KeyboardRepeatEngine();
 
     void setRepeatInfo(int32_t rate, int32_t delay);
+    void setCallback(std::function<void()> callback);
 
     void set();
     bool state();
