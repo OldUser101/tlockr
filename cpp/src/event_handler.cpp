@@ -62,6 +62,10 @@ int EventHandler::processEvent(EventType event_type, EventParam param_1,
                                               static_cast<KeyState>(param_2));
             break;
         }
+        case EventType::KeyboardRepeatInfo: {
+            m_keyboardHandler->handleRepeatInfoEvent(param_1, param_2);
+            break;
+        }
         case EventType::PointerMotion: {
             double surface_x = *reinterpret_cast<const double *>(&param_1);
             double surface_y = *reinterpret_cast<const double *>(&param_2);
