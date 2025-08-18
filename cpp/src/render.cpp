@@ -44,10 +44,6 @@ QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
     renderer->qmlPath = qmlPath;
     renderer->appState = appState;
 
-    renderer->keyboardRepeatEngine = new KeyboardRepeatEngine(renderer);
-    renderer->eventHandler =
-        new EventHandler(renderer, renderer->keyboardRepeatEngine);
-
     return renderer;
 }
 
@@ -158,6 +154,10 @@ void setup_renderer(QmlRenderer *renderer) {
                                                         renderer->interface);
 
     renderer->component = new QQmlComponent(renderer->engine);
+
+    renderer->keyboardRepeatEngine = new KeyboardRepeatEngine(renderer);
+    renderer->eventHandler =
+        new EventHandler(renderer, renderer->keyboardRepeatEngine);
 }
 
 void setup_renderer_signals(QmlRenderer *renderer) {

@@ -2,6 +2,7 @@
 // Copyright (C) 2025, Nathan Gill
 
 #include "keyboard.hpp"
+#include "keyboard_repeat.hpp"
 #include "logging.hpp"
 #include "render.hpp"
 #include <QCoreApplication>
@@ -115,8 +116,16 @@ void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
 
     if (state == KeyState::Pressed) {
         sendKeyEvent(QEvent::KeyPress, key, modifiers, text);
+
+        if (m_renderer->keyboardRepeatEngine->state()) {
+            m_renderer->keyboardRepeatEngine->reset();
+        }
+
+        m_renderer->keyboardRepeatEngine->set();
     } else if (state == KeyState::Released) {
         sendKeyEvent(QEvent::KeyRelease, key, modifiers, text);
+
+        m_renderer->keyboardRepeatEngine->reset();
     }
 }
 

@@ -6,6 +6,7 @@
 #ifndef KEYBOARD_REPEAT_HPP
 #define KEYBOARD_REPEAT_HPP
 
+#include <QTimer>
 #include <cstdint>
 
 struct QmlRenderer;
@@ -19,12 +20,22 @@ class KeyboardRepeatEngine {
 private:
     QmlRenderer *m_renderer;
     RepeatInfo *m_repeatInfo = nullptr;
+    QTimer *m_timer = nullptr;
+
+    bool m_running = false;
+
+    void tryStart();
+    void timeout();
 
 public:
     explicit KeyboardRepeatEngine(QmlRenderer *renderer);
     ~KeyboardRepeatEngine();
 
     void setRepeatInfo(int32_t rate, int32_t delay);
+
+    void set();
+    bool state();
+    void reset();
 };
 
 #endif
