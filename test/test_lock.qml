@@ -41,7 +41,7 @@ Rectangle {
                     anchors.margins: 10
                     color: "#ffffff"
                     font.pixelSize: 16
-                    //echoMode: TextInput.Password
+                    echoMode: TextInput.Password
                     
                     Rectangle {
                         anchors.fill: parent

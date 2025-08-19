@@ -11,6 +11,7 @@
 #include <functional>
 
 struct QmlRenderer;
+struct KeyPressEvent;
 
 struct RepeatInfo {
     int32_t rate;
@@ -26,7 +27,9 @@ private:
 
     bool m_running = false;
 
-    std::function<void()> m_callback;
+    std::function<void(KeyPressEvent *)> m_callback;
+
+    KeyPressEvent *m_lastEvent = nullptr;
 
     void tryStart();
     void timeout();
@@ -36,9 +39,9 @@ public:
     ~KeyboardRepeatEngine();
 
     void setRepeatInfo(int32_t rate, int32_t delay);
-    void setCallback(std::function<void()> callback);
+    void setCallback(std::function<void(KeyPressEvent *)> callback);
 
-    void set();
+    void set(KeyPressEvent *event);
     bool state();
     void reset();
 };

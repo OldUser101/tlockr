@@ -16,7 +16,8 @@ static const char *FILENAME = "tlockr_qt/keyboard.cpp";
 KeyboardHandler::KeyboardHandler(QmlRenderer *renderer)
     : m_renderer(renderer), m_xkbContext(nullptr), m_xkbKeymap(nullptr),
       m_xkbState(nullptr) {
-    renderer->keyboardRepeatEngine->setCallback([this] { sendLastPress(); });
+    renderer->keyboardRepeatEngine->setCallback(
+        [this](KeyPressEvent *event) { sendLastPress(event); });
 }
 
 KeyboardHandler::~KeyboardHandler() {
@@ -119,12 +120,11 @@ void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
     if (state == KeyState::Pressed) {
         sendKeyEvent(QEvent::KeyPress, key, modifiers, text);
 
-        m_lastPress.key = key;
-        m_lastPress.modifiers = modifiers;
-        m_lastPress.text = text;
+        m_lastEvent.key = key;
+        m_lastEvent.modifiers = modifiers;
+        m_lastEvent.text = text;
 
-        m_renderer->keyboardRepeatEngine->reset();
-        m_renderer->keyboardRepeatEngine->set();
+        m_renderer->keyboardRepeatEngine->set(&m_lastEvent);
     } else if (state == KeyState::Released) {
         sendKeyEvent(QEvent::KeyRelease, key, modifiers, text);
 
@@ -132,9 +132,13 @@ void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
     }
 }
 
-void KeyboardHandler::sendLastPress() {
-    sendKeyEvent(QEvent::KeyPress, m_lastPress.key, m_lastPress.modifiers,
-                 m_lastPress.text);
+void KeyboardHandler::sendLastPress(KeyPressEvent *event) {
+    if (event == nullptr) {
+        warn_log(FILENAME, "Repeated event was null");
+        return;
+    }
+
+    sendKeyEvent(QEvent::KeyPress, event->key, event->modifiers, event->text);
 }
 
 void KeyboardHandler::sendKeyEvent(QEvent::Type eventType, Qt::Key key,

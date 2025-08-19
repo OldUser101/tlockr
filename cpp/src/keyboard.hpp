@@ -32,7 +32,7 @@ private:
     struct xkb_keymap *m_xkbKeymap;
     struct xkb_state *m_xkbState;
 
-    KeyPressEvent m_lastPress;
+    KeyPressEvent m_lastEvent;
 
 public:
     explicit KeyboardHandler(QmlRenderer *renderer);
@@ -46,8 +46,8 @@ public:
 
     Qt::Key xkbKeysymToQtKey(xkb_keysym_t keysym);
     Qt::KeyboardModifiers xkbStateToQtModifiers();
-    
-    void sendLastPress();
+
+    void sendLastPress(KeyPressEvent *event);
     void sendKeyEvent(QEvent::Type eventType, Qt::Key key,
                       Qt::KeyboardModifiers modifiers, const QString &text);
 };

@@ -2,6 +2,7 @@
 // Copyright (C) 2025, Nathan Gill
 
 #include "keyboard_repeat.hpp"
+#include "keyboard.hpp"
 #include "logging.hpp"
 #include "render.hpp"
 #include <QObject>
@@ -13,7 +14,10 @@ KeyboardRepeatEngine::KeyboardRepeatEngine(QmlRenderer *renderer)
     m_timer = new QTimer();
     m_delayTimer = new QTimer();
 
+    m_delayTimer->setSingleShot(true);
+
     QObject::connect(m_timer, &QTimer::timeout, [this] { timeout(); });
+    QObject::connect(m_delayTimer, &QTimer::timeout, [this] { tryStart(); });
 }
 
 KeyboardRepeatEngine::~KeyboardRepeatEngine() {
@@ -42,11 +46,13 @@ void KeyboardRepeatEngine::setRepeatInfo(int32_t rate, int32_t delay) {
     m_repeatInfo->delay = delay;
 
     m_timer->setInterval(rate);
+    m_delayTimer->setInterval(delay);
 
     debug_log(FILENAME, "Updated repeat info");
 }
 
-void KeyboardRepeatEngine::setCallback(std::function<void()> callback) {
+void KeyboardRepeatEngine::setCallback(
+    std::function<void(KeyPressEvent *)> callback) {
     m_callback = std::move(callback);
 }
 
@@ -60,7 +66,7 @@ void KeyboardRepeatEngine::tryStart() {
 void KeyboardRepeatEngine::timeout() {
     if (m_running) {
         if (m_callback) {
-            m_callback();
+            m_callback(m_lastEvent);
         }
         debug_log(FILENAME, "Keyboard repeat");
     } else {
@@ -68,7 +74,7 @@ void KeyboardRepeatEngine::timeout() {
     }
 }
 
-void KeyboardRepeatEngine::set() {
+void KeyboardRepeatEngine::set(KeyPressEvent *event) {
     if (m_repeatInfo == nullptr) {
         return;
     }
@@ -76,14 +82,16 @@ void KeyboardRepeatEngine::set() {
     reset();
 
     m_running = true;
+    m_lastEvent = event;
 
-    m_delayTimer->singleShot(m_repeatInfo->delay, [this] { tryStart(); });
+    m_delayTimer->start();
 }
 
 bool KeyboardRepeatEngine::state() { return m_running; }
 
 void KeyboardRepeatEngine::reset() {
     m_running = false;
+    m_lastEvent = nullptr;
     m_timer->stop();
     m_delayTimer->stop();
 }
