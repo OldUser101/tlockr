@@ -19,12 +19,20 @@ enum class KeyState : uint32_t {
 
 struct QmlRenderer;
 
+struct KeyPressEvent {
+    Qt::Key key;
+    Qt::KeyboardModifiers modifiers;
+    QString text;
+};
+
 class KeyboardHandler {
 private:
     QmlRenderer *m_renderer;
     struct xkb_context *m_xkbContext;
     struct xkb_keymap *m_xkbKeymap;
     struct xkb_state *m_xkbState;
+
+    KeyPressEvent m_lastEvent;
 
 public:
     explicit KeyboardHandler(QmlRenderer *renderer);
@@ -39,6 +47,7 @@ public:
     Qt::Key xkbKeysymToQtKey(xkb_keysym_t keysym);
     Qt::KeyboardModifiers xkbStateToQtModifiers();
 
+    void sendLastPress(KeyPressEvent *event);
     void sendKeyEvent(QEvent::Type eventType, Qt::Key key,
                       Qt::KeyboardModifiers modifiers, const QString &text);
 };

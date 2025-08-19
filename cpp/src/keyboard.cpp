@@ -2,6 +2,7 @@
 // Copyright (C) 2025, Nathan Gill
 
 #include "keyboard.hpp"
+#include "keyboard_repeat.hpp"
 #include "logging.hpp"
 #include "render.hpp"
 #include <QCoreApplication>
@@ -14,7 +15,10 @@ static const char *FILENAME = "tlockr_qt/keyboard.cpp";
 
 KeyboardHandler::KeyboardHandler(QmlRenderer *renderer)
     : m_renderer(renderer), m_xkbContext(nullptr), m_xkbKeymap(nullptr),
-      m_xkbState(nullptr) {}
+      m_xkbState(nullptr) {
+    renderer->keyboardRepeatEngine->setCallback(
+        [this](KeyPressEvent *event) { sendLastPress(event); });
+}
 
 KeyboardHandler::~KeyboardHandler() {
     if (m_xkbContext) {
@@ -115,9 +119,26 @@ void KeyboardHandler::handleKeyEvent(uint32_t key_code, KeyState state) {
 
     if (state == KeyState::Pressed) {
         sendKeyEvent(QEvent::KeyPress, key, modifiers, text);
+
+        m_lastEvent.key = key;
+        m_lastEvent.modifiers = modifiers;
+        m_lastEvent.text = text;
+
+        m_renderer->keyboardRepeatEngine->set(&m_lastEvent);
     } else if (state == KeyState::Released) {
         sendKeyEvent(QEvent::KeyRelease, key, modifiers, text);
+
+        m_renderer->keyboardRepeatEngine->reset();
     }
+}
+
+void KeyboardHandler::sendLastPress(KeyPressEvent *event) {
+    if (event == nullptr) {
+        warn_log(FILENAME, "Repeated event was null");
+        return;
+    }
+
+    sendKeyEvent(QEvent::KeyPress, event->key, event->modifiers, event->text);
 }
 
 void KeyboardHandler::sendKeyEvent(QEvent::Type eventType, Qt::Key key,

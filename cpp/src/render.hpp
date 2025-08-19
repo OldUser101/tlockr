@@ -36,6 +36,7 @@
 
 class EventHandler;
 class Interface;
+class KeyboardRepeatEngine;
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,6 +87,7 @@ struct QmlRenderer {
     EventHandler *eventHandler;
     ApplicationState *appState;
     Interface *interface;
+    KeyboardRepeatEngine *keyboardRepeatEngine;
 };
 
 QmlRenderer *initialize_renderer(int width, int height, const char *qmlPath,
