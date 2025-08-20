@@ -10,7 +10,7 @@ tlockr is a screen locker for Wayland compositors that support the `ext_session_
 
 Examples of compositors that support this protocol are:
 
-- [sway](https://github.com/swaywm/sway)
+- [Sway](https://github.com/swaywm/sway)
 - [Hyprland](https://github.com/hyprwm/Hyprland)
 - [river](https://codeberg.org/river/river)
 - [niri](https://github.com/YaLTeR/niri)
