@@ -45,17 +45,8 @@ impl WaylandState {
         Ok(())
     }
 
-    /// Unlock the session
-    ///
-    /// This function unlocks the session and destroys the lock surface.
-    /// It also sets the application state to unlocked, to exit the event
-    /// loop.
-    pub fn unlock(
-        &mut self,
-        event_queue: &EventQueue<Self>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let qh = event_queue.handle();
-
+    /// Internal session unlock function, with a `QueueHandle` instead of `EventQueue`
+    pub fn unlock_qh(&mut self, qh: &QueueHandle<Self>) -> Result<(), Box<dyn std::error::Error>> {
         let session_lock = self
             .session_lock
             .as_ref()
@@ -73,12 +64,26 @@ impl WaylandState {
             .display
             .as_ref()
             .ok_or::<Box<dyn std::error::Error>>("wl_display not set!".into())?;
-        display.sync(&qh, ());
+        display.sync(qh, ());
 
         info!("Session is unlocked");
         set_state(self.app_state, State::Unlocked);
 
         Ok(())
+    }
+
+    /// Unlock the session
+    ///
+    /// This function unlocks the session and destroys the lock surface.
+    /// It also sets the application state to unlocked, to exit the event
+    /// loop.
+    pub fn unlock(
+        &mut self,
+        event_queue: &EventQueue<Self>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let qh = event_queue.handle();
+
+        self.unlock_qh(&qh)
     }
 }
 
@@ -103,8 +108,12 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
                 }
             }
             ext_session_lock_v1::Event::Finished => {
-                // TODO: Call `unlock` with the queue handle
-                warn!("Compositor requested unlocking, but this is not implemented");
+                 match state.unlock_qh(qh) {
+                    Err(e) => {
+                        error!("{:?}", e);
+                    }
+                    _ => {}
+                 }
             }
             _ => {}
         }
