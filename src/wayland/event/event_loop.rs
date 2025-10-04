@@ -136,7 +136,7 @@ impl WaylandState {
                 .epoll
                 .wait(&mut event_loop.events, PollTimeout::from(17u16))
             {
-                Ok(n) => self.process_epoll_events(&mut event_loop.events, n)?,
+                Ok(n) => self.process_epoll_events(&event_loop.events, n)?,
                 Err(Errno::EINTR) => false, // Continue the loop if interrupted
                 Err(e) => Err(Box::new(e))?,
             }
@@ -175,7 +175,7 @@ impl WaylandState {
         )?;
 
         while self.continue_running()? {
-            self.update_states(&event_queue)?;
+            self.update_states(event_queue)?;
 
             event_queue.flush()?;
             event_queue.dispatch_pending(self)?;

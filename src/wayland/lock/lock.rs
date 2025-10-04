@@ -107,14 +107,12 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
                     }
                 }
             }
-            ext_session_lock_v1::Event::Finished => {
-                 match state.unlock_qh(qh) {
-                    Err(e) => {
-                        error!("{:?}", e);
-                    }
-                    _ => {}
-                 }
-            }
+            ext_session_lock_v1::Event::Finished => match state.unlock_qh(qh) {
+                Err(e) => {
+                    error!("{:?}", e);
+                }
+                _ => {}
+            },
             _ => {}
         }
     }
