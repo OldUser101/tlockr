@@ -1,6 +1,8 @@
 # tlockr
 
 ![Build Status](https://github.com/OldUser101/tlockr/actions/workflows/default.yml/badge.svg)
+[![Crates.io](https://img.shields.io/crates/v/tlockr.svg)](https://crates.io/crates/tlockr)
+![License](https://img.shields.io/crates/l/tlockr.svg?branch=main)
 
 tlockr is a highly customisable screen locker for wlroots-based compositors.
 
