@@ -6,7 +6,8 @@
         Empty dispatch methods for various Wayland objects.
 */
 
-use crate::wayland::state::WaylandState;
+use crate::wayland::WaylandState;
+
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::{

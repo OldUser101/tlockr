@@ -7,12 +7,12 @@
         backend, and links with the rest of the application.
 */
 
-use crate::shared::interface::{get_state, set_renderer_read_fd, set_renderer_write_fd};
-use crate::shared::pipe::Pipe;
-use crate::shared::state::ApplicationState;
-use crate::shared::{interface::set_state, state::State};
-use crate::wayland::buffer::manager::BufferManager;
-use crate::wayland::event::event::Event;
+use crate::buffer::BufferManager;
+use crate::event::Event;
+use crate::ffi::{get_state, set_renderer_read_fd, set_renderer_write_fd, set_state};
+use crate::shared::State;
+use crate::shared::{ApplicationState, Pipe};
+
 use std::os::fd::AsRawFd;
 use std::time::Instant;
 use wayland_client::EventQueue;

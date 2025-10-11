@@ -7,9 +7,11 @@
         and from an EventFd, used for signals from the renderer, via epoll.
 */
 
-use crate::shared::{interface::get_state, state::State};
-use crate::wayland::event::event_type::EventType;
-use crate::wayland::state::WaylandState;
+use crate::event::EventType;
+use crate::ffi::get_state;
+use crate::shared::State;
+use crate::wayland::WaylandState;
+
 use nix::errno::Errno;
 use nix::poll::PollTimeout;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags};

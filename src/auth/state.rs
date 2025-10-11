@@ -6,10 +6,10 @@
         Definitions of `AuthenticatorState`
 */
 
-use crate::shared::{interface::set_auth_write_fd, pipe::Pipe, state::ApplicationStatePtr};
-use crate::wayland::event::event::Event;
-use crate::wayland::event::event_param::EventParam;
-use crate::wayland::event::event_type::EventType;
+use crate::event::{Event, EventParam, EventType};
+use crate::ffi::set_auth_write_fd;
+use crate::shared::{ApplicationStatePtr, Pipe};
+
 use nix::unistd::dup;
 use std::{
     os::fd::{AsRawFd, OwnedFd},

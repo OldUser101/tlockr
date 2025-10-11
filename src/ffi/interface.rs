@@ -6,10 +6,9 @@
         Safe getter/setter methods for the ApplicationState object.
 */
 
-use crate::{
-    shared::ffi::QmlRenderer,
-    shared::state::{ApplicationState, State},
-};
+use crate::ffi::QmlRenderer;
+use crate::shared::{ApplicationState, State};
+
 use std::os::raw::{c_char, c_int};
 
 macro_rules! safe_getter {

@@ -6,11 +6,11 @@
         Contains the event loop for the `AuthenticatorState` struct
 */
 
-use crate::{
-    auth::state::AuthenticatorState,
-    shared::{ffi::ForeignBuffer, interface::set_state, state::State},
-    wayland::event::{event::Event, event_type::EventType},
-};
+use crate::auth::state::AuthenticatorState;
+use crate::event::{Event, EventType};
+use crate::ffi::{ForeignBuffer, set_state};
+use crate::shared::State;
+
 use nix::poll::{PollFd, PollFlags, poll};
 use pam::{Client, PamError};
 use std::{

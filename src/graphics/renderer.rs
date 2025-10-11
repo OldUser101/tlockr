@@ -7,17 +7,16 @@
         trigger content refresh.
 */
 
+use crate::buffer::BufferManager;
+use crate::event::Event;
+use crate::ffi::{
+    cleanup_renderer, get_qml_path, get_renderer, initialize_renderer, set_callbacks, set_renderer,
+};
+use crate::wayland::WaylandState;
+
+use std::{ffi::c_void, i32};
 use wayland_client::protocol::wl_surface::WlSurface;
 use wayland_protocols::wp::viewporter::client::wp_viewport::WpViewport;
-
-use crate::{
-    shared::{
-        ffi::{cleanup_renderer, initialize_renderer, set_callbacks},
-        interface::{get_qml_path, get_renderer, set_renderer},
-    },
-    wayland::{buffer::manager::BufferManager, event::event::Event, state::WaylandState},
-};
-use std::{ffi::c_void, i32};
 
 impl WaylandState {
     /// Callback function for the renderer.

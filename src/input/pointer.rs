@@ -6,12 +6,10 @@
         Redirects pointer events to Qt
 */
 
-use std::time::{Duration, Instant};
+use crate::event::{Event, EventParam, EventType};
+use crate::wayland::WaylandState;
 
-use crate::wayland::{
-    event::{event::Event, event_param::EventParam, event_type::EventType},
-    state::WaylandState,
-};
+use std::time::{Duration, Instant};
 use wayland_client::{
     Connection, Dispatch, QueueHandle, WEnum,
     protocol::wl_pointer::{self, WlPointer},

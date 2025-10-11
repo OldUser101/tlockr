@@ -6,10 +6,9 @@
         Redirects keyboard events to Qt
 */
 
-use crate::wayland::{
-    event::{event::Event, event_param::EventParam, event_type::EventType},
-    state::WaylandState,
-};
+use crate::event::{Event, EventParam, EventType};
+use crate::wayland::WaylandState;
+
 use std::os::fd::IntoRawFd;
 use wayland_client::{
     Connection, Dispatch, QueueHandle, WEnum,
