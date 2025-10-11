@@ -12,7 +12,7 @@ use crate::ffi::{ForeignBuffer, set_state};
 use crate::shared::State;
 
 use nix::poll::{PollFd, PollFlags, poll};
-use pam::{Client, PamError};
+use pam_rs::{Client, PamError};
 use std::{
     ffi::{CStr, c_void},
     os::{fd::AsFd, raw::c_char},

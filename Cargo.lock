@@ -293,18 +293,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
-name = "pam"
-version = "0.8.0"
-source = "git+https://github.com/1wilkens/pam?branch=master#daf26ae3512d8e5a7478ccff1e4232ef5ebf9b03"
-dependencies = [
- "libc",
- "memchr",
- "pam-macros",
- "pam-sys",
- "uzers 0.11.3",
-]
-
-[[package]]
 name = "pam-macros"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -313,6 +301,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "pam-rs"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ab3bf0f8b9185762d097423ba990a2eb3140975431d37b78e58ab0bae26772c"
+dependencies = [
+ "libc",
+ "memchr",
+ "pam-macros",
+ "pam-sys",
+ "uzers 0.11.3",
 ]
 
 [[package]]
@@ -478,7 +479,7 @@ dependencies = [
  "cmake",
  "log",
  "nix",
- "pam",
+ "pam-rs",
  "tracing",
  "tracing-subscriber",
  "uzers 0.12.1",

@@ -5,13 +5,17 @@
 name = "tlockr"
 version = "0.1.0"
 edition = "2024"
+description = "A highly customisable screen locker for wlroots-based compositors"
+repository = "https://github.com/OldUser101/tlockr"
+license = "GPL-3.0-or-later"
+keywords = [ "wlroots", "wayland" ]
 build = "build.rs"
 
 [dependencies]
 chrono = "0.4.41"
 log = "0.4.27"
 nix = { version = "0.30.1", features = [ "fs", "event" ] }
-pam = { git = "https://github.com/1wilkens/pam", branch = "master"}
+pam-rs = "0.9.1"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.20"
 uzers = "0.12.1"
