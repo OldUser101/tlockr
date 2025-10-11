@@ -6,8 +6,9 @@
         Contains a dispatch method to obtain the output display dimensions.
 */
 
-use crate::shared::interface::{set_output_height, set_output_width};
-use crate::wayland::state::WaylandState;
+use crate::ffi::{set_output_height, set_output_width};
+use crate::wayland::WaylandState;
+
 use tracing::debug;
 use wayland_client::{
     Connection, Dispatch, QueueHandle,

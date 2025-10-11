@@ -6,8 +6,9 @@
         Contains operations relating to memory allocation for `BufferManager`
 */
 
-use crate::wayland::buffer::manager::{Buffer, BufferManager};
-use crate::wayland::state::WaylandState;
+use crate::buffer::{Buffer, BufferManager};
+use crate::wayland::WaylandState;
+
 use nix::libc::{MAP_SHARED, PROT_READ, PROT_WRITE, ftruncate, mmap};
 use nix::sys::memfd::{MFdFlags, memfd_create};
 use std::os::{

@@ -6,10 +6,11 @@
         Manages the state of the screen lock, and associated surfaces.
 */
 
-use crate::shared::interface::get_renderer;
-use crate::shared::state::State;
-use crate::shared::{ffi::start_renderer, interface::set_state};
-use crate::wayland::state::WaylandState;
+use crate::ffi::get_renderer;
+use crate::ffi::{set_state, start_renderer};
+use crate::shared::State;
+use crate::wayland::WaylandState;
+
 use tracing::{error, info, warn};
 use wayland_client::{Connection, Dispatch, EventQueue, QueueHandle};
 use wayland_protocols::ext::session_lock::v1::client::{
@@ -107,14 +108,12 @@ impl Dispatch<ExtSessionLockV1, ()> for WaylandState {
                     }
                 }
             }
-            ext_session_lock_v1::Event::Finished => {
-                 match state.unlock_qh(qh) {
-                    Err(e) => {
-                        error!("{:?}", e);
-                    }
-                    _ => {}
-                 }
-            }
+            ext_session_lock_v1::Event::Finished => match state.unlock_qh(qh) {
+                Err(e) => {
+                    error!("{:?}", e);
+                }
+                _ => {}
+            },
             _ => {}
         }
     }

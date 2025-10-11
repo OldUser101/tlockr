@@ -6,9 +6,9 @@
         `Event` and `EventType` objects for event handling
 */
 
-use std::os::fd::OwnedFd;
+use crate::event::{EventParam, EventType};
 
-use crate::wayland::event::{event_param::EventParam, event_type::EventType};
+use std::os::fd::OwnedFd;
 
 /// Event structure containing event serial, type, and parameters
 ///

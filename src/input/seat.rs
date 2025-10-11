@@ -6,7 +6,8 @@
         Handles seat capability events and acquires keyboard and pointer interfaces
 */
 
-use crate::wayland::state::WaylandState;
+use crate::wayland::WaylandState;
+
 use tracing::debug;
 use wayland_client::{
     Connection, Dispatch, QueueHandle, WEnum,

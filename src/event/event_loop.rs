@@ -7,9 +7,11 @@
         and from an EventFd, used for signals from the renderer, via epoll.
 */
 
-use crate::shared::{interface::get_state, state::State};
-use crate::wayland::event::event_type::EventType;
-use crate::wayland::state::WaylandState;
+use crate::event::EventType;
+use crate::ffi::get_state;
+use crate::shared::State;
+use crate::wayland::WaylandState;
+
 use nix::errno::Errno;
 use nix::poll::PollTimeout;
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags};
@@ -136,7 +138,7 @@ impl WaylandState {
                 .epoll
                 .wait(&mut event_loop.events, PollTimeout::from(17u16))
             {
-                Ok(n) => self.process_epoll_events(&mut event_loop.events, n)?,
+                Ok(n) => self.process_epoll_events(&event_loop.events, n)?,
                 Err(Errno::EINTR) => false, // Continue the loop if interrupted
                 Err(e) => Err(Box::new(e))?,
             }
@@ -175,7 +177,7 @@ impl WaylandState {
         )?;
 
         while self.continue_running()? {
-            self.update_states(&event_queue)?;
+            self.update_states(event_queue)?;
 
             event_queue.flush()?;
             event_queue.dispatch_pending(self)?;

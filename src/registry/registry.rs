@@ -6,7 +6,8 @@
         Binds Wayland interfaces to objects in WaylandState.
 */
 
-use crate::wayland::state::WaylandState;
+use crate::wayland::WaylandState;
+
 use wayland_client::{
     Connection, Dispatch, QueueHandle,
     protocol::{

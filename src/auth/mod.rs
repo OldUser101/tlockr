@@ -1,2 +1,4 @@
-pub mod event_loop;
-pub mod state;
+mod event_loop;
+mod state;
+
+pub use state::*;

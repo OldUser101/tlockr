@@ -7,9 +7,9 @@
         for the shared state.
 */
 
-use std::os::raw::{c_char, c_int};
+use crate::ffi::QmlRenderer;
 
-use crate::shared::ffi::QmlRenderer;
+use std::os::raw::{c_char, c_int};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]

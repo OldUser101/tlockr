@@ -6,9 +6,9 @@
         Prototypes for C++ renderer FFI.
 */
 
-use std::os::raw::{c_char, c_int, c_void};
+use crate::shared::ApplicationState;
 
-use crate::shared::state::ApplicationState;
+use std::os::raw::{c_char, c_int, c_void};
 
 #[repr(C)]
 pub struct QmlRenderer {
