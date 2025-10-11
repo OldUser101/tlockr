@@ -2,11 +2,11 @@
 
 ![Build Status](https://github.com/OldUser101/tlockr/actions/workflows/default.yml/badge.svg)
 
-tlockr is a highly customisable screen locker for Wayland-based compositors.
+tlockr is a highly customisable screen locker for wlroots-based compositors.
 
 ## What is it?
 
-tlockr is a screen locker for Wayland compositors that support the `ext_session_lock_v1` protocol. 
+tlockr is a screen locker for wlroots Wayland compositors that support the `ext_session_lock_v1` protocol
 
 Examples of compositors that support this protocol are:
 
