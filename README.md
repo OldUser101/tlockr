@@ -54,10 +54,12 @@ You can then proceed to the building step. You will need:
 
 ```sh
 $ cd tlockr
-$ cargo build --release
+$ mkdir build && cd build
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ make -j${nproc}
 ```
 
-The compiled binary can be found at `target/release/tlockr`.
+The compiled binary can be found at `build/target/release/tlockr`.
 
 ## Themes
 
