@@ -6,5 +6,6 @@
 **/cmake_install.cmake
 **/Makefile
 **/compile_commands.json
+**/Testing/
 output.txt
 *.code-workspace

@@ -54,7 +54,9 @@ jobs:
             - name: Build
               env:
                   CMAKE_PREFIX_PATH: ${{ env.QT6_PREFIX }}
-              run: cargo build --verbose
-
+              run: |
+                  cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DRUST_VERBOSE=ON
+                  cmake --build build
+                  
             - name: Test
-              run: cargo test --verbose
+              run: ctest --test-dir build --output-on-failure
