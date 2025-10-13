@@ -28,16 +28,11 @@ else()
     set(CARGO_VERBOSE "")
 endif()
 
-add_custom_command(
-    OUTPUT ${CARGO_OUTPUT}
+add_custom_target(tlockr ALL
     COMMAND cargo build ${CARGO_PROFILE} ${CARGO_VERBOSE} --manifest-path ${CARGO_MANIFEST_PATH} --target-dir ${CARGO_TARGET_DIR}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Building tlockr with Cargo (${CMAKE_BUILD_TYPE})"
     DEPENDS tlockr_qt
-)
-
-add_custom_target(tlockr ALL
-    DEPENDS ${CARGO_OUTPUT}
 )
 
 add_test(NAME rust_tests
