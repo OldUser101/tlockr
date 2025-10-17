@@ -7,107 +7,57 @@
         various state objects.
 */
 
-use crate::auth::AuthenticatorState;
-use crate::shared::{ApplicationState, ApplicationStatePtr};
-use crate::wayland::WaylandState;
+use crate::cli::{LogLevel, build_cli, run_lock};
+use crate::config::{RunConfig, load_root_config};
 
-use nix::libc;
-use std::{
-    env,
-    ffi::CString,
-    fs::OpenOptions,
-    os::fd::AsRawFd,
-    sync::atomic::{AtomicBool, Ordering},
-};
-use tracing::{Level, debug, error, info};
+use tracing::{debug, error};
 
-/// Flag that signals the authentication thread to exit
-static AUTH_STOP_FLAG: AtomicBool = AtomicBool::new(false);
-
-/// Redirect stderr to /dev/null
-fn suppress_stderr() {
-    let devnull = OpenOptions::new().write(true).open("/dev/null").unwrap();
-    unsafe {
-        libc::dup2(devnull.as_raw_fd(), libc::STDERR_FILENO);
-    }
-}
-
-/// Run tlockr
-///
-/// This function is called by main to allow for better handling of errors
-fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() != 2 {
-        println!("Usage: tlockr <qml path>");
-        return Err("Invalid number of arguments".into());
-    }
-
-    let qml_path_cstring = CString::new(args[1].clone())?;
-    let qml_path_raw = qml_path_cstring.into_raw();
-
-    debug!("Initializing Wayland interfaces...");
-
-    let mut app_state = ApplicationState::new(qml_path_raw);
-    let app_state_ptr = ApplicationStatePtr::new(&mut app_state as *mut ApplicationState);
-    let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
-    let mut auth_state =
-        AuthenticatorState::new(app_state_ptr, &AUTH_STOP_FLAG)
-            .ok_or::<Box<dyn std::error::Error>>("Failed to create authenticator state".into())?;
-
-    let mut event_queue = state.initialize()?;
-
-    // TODO: Store pipe fd in ApplicationState
-    auth_state.initialize(state.renderer_write_pipe.as_ref().unwrap().write_fd())?;
-
-    let auth_thread = std::thread::spawn(move || {
-        info!("Authentication thread started");
-
-        match auth_state.run_event_loop() {
-            Err(e) => {
-                error!("{:?}", e);
-            }
-            _ => {}
-        }
-
-        info!("Authentication thread exited");
-    });
-
-    state.roundtrip(&mut event_queue)?;
-
-    debug!("Wayland interfaces initialized successfully.");
-
-    state.run_event_loop(&mut event_queue)?;
-
-    state.destroy_renderer();
-
-    AUTH_STOP_FLAG.store(true, Ordering::Relaxed);
-
-    let _ = auth_thread.join();
-
-    Ok(())
-}
-
-/// Start the `tlockr` CLI.
+/// Run the command line parser for tlockr
 pub fn start() {
-    // Supress stderr, since `tracing` is used instead
-    suppress_stderr();
+    let matches = build_cli().get_matches();
+
+    let log_level = matches
+        .get_one::<LogLevel>("log_level")
+        .unwrap_or(&LogLevel::INFO);
 
     tracing_subscriber::fmt()
         .with_timer(tracing_subscriber::fmt::time::uptime())
-        .with_max_level(Level::DEBUG)
+        .with_max_level(log_level.to_level())
         .init();
 
-    let now = chrono::Local::now();
-    info!("tlockr started at {}", now.to_rfc3339());
+    // Load the root configuration, exiting if it is invalid
+    let root_config = load_root_config();
 
-    match run() {
-        Err(e) => {
-            error!("{:?}", e);
+    let now = chrono::Local::now();
+    debug!("tlockr started at {}", now.to_rfc3339());
+
+    let result: Result<_, Box<dyn std::error::Error>> = match matches.subcommand() {
+        Some(("run", args)) => {
+            let theme = args.get_one::<String>("theme");
+            let config = args.get_one::<String>("config");
+            let develop = args.get_flag("develop");
+
+            let stored_run_config = root_config.run.unwrap_or_default();
+
+            let run_config = RunConfig {
+                theme: theme.or(stored_run_config.theme.as_ref()),
+                config,
+                develop,
+            };
+
+            run_lock(&run_config)
         }
-        _ => {}
+        None => {
+            build_cli().print_help().unwrap();
+            Ok(())
+        }
+        _ => unreachable!(),
+    };
+
+    if let Err(e) = result {
+        error!("{:?}", e);
     }
 
     let now = chrono::Local::now();
-    info!("tlockr exited at {}", now.to_rfc3339())
+    debug!("tlockr exited at {}", now.to_rfc3339());
 }

@@ -9,6 +9,7 @@
 pub mod auth;
 pub mod buffer;
 pub mod cli;
+pub mod config;
 pub mod event;
 pub mod ffi;
 pub mod graphics;
