@@ -17,6 +17,8 @@ use wayland_client::protocol::wl_surface::WlSurface;
 use wayland_protocols::wp::viewporter::client::wp_viewport::WpViewport;
 
 const HEADER_STRING: &str = "** TLOCKR FALLBACK MODE **";
+const PASSWORD_STRING: &str = "Password: ";
+const PASSWORD_CHAR: &str = "*";
 
 pub struct FallbackRenderer {
     surface: *const WlSurface,
@@ -24,6 +26,7 @@ pub struct FallbackRenderer {
     buffer: *mut Buffer,
     width: i32,
     height: i32,
+    password: String,
 }
 
 impl FallbackRenderer {
@@ -40,15 +43,13 @@ impl FallbackRenderer {
             buffer,
             width,
             height,
+            password: "".to_string()
         }
     }
 
     /// Initialize the fallback renderer
     pub fn initialize(&mut self) {
-        self.clear_background();
-        self.draw_header();
-        self.refresh();
-
+        self.redraw();
         info!("Initialized fallback renderer");
     }
 
@@ -78,6 +79,26 @@ impl FallbackRenderer {
         let _ = head.draw(self);
     }
 
+    /// Draw the password prompt, with password chars
+    fn draw_prompt(&mut self, len: usize) {
+        let mut prompt_str = PASSWORD_STRING.to_string();
+
+        for _ in 0..len {
+            prompt_str += PASSWORD_CHAR;
+        }
+
+        let prompt = Text::new(prompt_str.as_str(), Point::new(0, 20), TextStyle::new(&FONT_10x20_BOLD, BinaryColor::On));
+        let _ = prompt.draw(self);
+    }
+
+    /// Redraw prompts on the screen
+    fn redraw(&mut self) {
+        self.clear_background();
+        self.draw_header();
+        self.draw_prompt(self.password.len());
+        self.refresh();
+    }
+
     /// Refresh the buffer on the screen
     fn refresh(&mut self) {
         let surface = unsafe { &*self.surface };
@@ -88,6 +109,11 @@ impl FallbackRenderer {
         surface.damage_buffer(0, 0, i32::MAX, i32::MAX);
         viewport.set_destination(self.width, self.height);
         surface.commit();
+    }
+
+    pub fn key_event(&mut self, key: u64) {
+        self.password += ".";
+        self.redraw();
     }
 }
 

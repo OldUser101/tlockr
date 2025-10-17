@@ -78,6 +78,7 @@ pub struct WaylandState {
     pub fallback: bool,
 
     pub fallback_renderer: Option<FallbackRenderer>,
+    pub cached_keymap: Option<String>,
 }
 
 impl WaylandState {
@@ -112,6 +113,7 @@ impl WaylandState {
             develop,
             fallback: false,
             fallback_renderer: None,
+            cached_keymap: None,
         }
     }
 
@@ -221,7 +223,8 @@ impl WaylandState {
         let surface = self.surface.as_ref().unwrap() as *const _;
         let viewport = self.viewport.as_ref().unwrap() as *const _;
 
-        let mut renderer = FallbackRenderer::new(surface, viewport, buffer, self.width, self.height);
+        let mut renderer =
+            FallbackRenderer::new(surface, viewport, buffer, self.width, self.height);
         renderer.initialize();
 
         self.fallback_renderer = Some(renderer);

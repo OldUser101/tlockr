@@ -9,7 +9,9 @@
 use crate::event::{Event, EventParam, EventType};
 use crate::wayland::WaylandState;
 
-use std::os::fd::IntoRawFd;
+use std::fs::File;
+use std::io::Read;
+use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd};
 use wayland_client::{
     Connection, Dispatch, QueueHandle, WEnum,
     protocol::wl_keyboard::{self, KeymapFormat, WlKeyboard},
@@ -28,6 +30,12 @@ impl Dispatch<WlKeyboard, ()> for WaylandState {
         match event {
             wl_keyboard::Event::Keymap { format, fd, size } => {
                 if format == WEnum::Value(KeymapFormat::XkbV1) {
+                    // Cache the keymap in case it is needed by the fallback renderer
+                    let mut file = unsafe { File::from_raw_fd(fd.as_raw_fd()) };
+                    let mut keymap_data = String::with_capacity(size as usize);
+                    file.read_to_string(&mut keymap_data).unwrap_or(0);
+                    wayland_state.cached_keymap = Some(keymap_data);
+
                     let event = Event::new(
                         EventType::KeyboardKeymap,
                         EventParam::from(fd.into_raw_fd() as u64),
@@ -48,21 +56,27 @@ impl Dispatch<WlKeyboard, ()> for WaylandState {
                 key,
                 state,
             } => {
-                let event = Event::new(
-                    EventType::KeyboardKey,
-                    EventParam::from(key as u64),
-                    EventParam::from(match state {
-                        WEnum::Value(val) => val as u64,
-                        WEnum::Unknown(val) => val as u64,
-                    }),
-                );
-                let _ = event.write_to(
-                    wayland_state
-                        .renderer_write_pipe
-                        .as_ref()
-                        .unwrap()
-                        .write_fd(),
-                );
+                if let Some(fallback) = wayland_state.fallback_renderer.as_mut() {
+                    if matches!(state, WEnum::Value(wl_keyboard::KeyState::Pressed)) {
+                        fallback.key_event(key as u64);
+                    }
+                } else {
+                    let event = Event::new(
+                        EventType::KeyboardKey,
+                        EventParam::from(key as u64),
+                        EventParam::from(match state {
+                            WEnum::Value(val) => val as u64,
+                            WEnum::Unknown(val) => val as u64,
+                        }),
+                    );
+                    let _ = event.write_to(
+                        wayland_state
+                            .renderer_write_pipe
+                            .as_ref()
+                            .unwrap()
+                            .write_fd(),
+                    );
+                }
             }
             wl_keyboard::Event::Modifiers {
                 serial: _,
