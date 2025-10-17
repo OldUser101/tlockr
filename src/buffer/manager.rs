@@ -107,6 +107,11 @@ impl BufferManager {
         self.buffers.as_ref()?.iter().find(|b| !b.in_use)
     }
 
+    /// Get a buffer directly by index
+    pub fn get_buffer(&mut self, index: usize) -> &mut Buffer {
+        &mut self.buffers.as_mut().unwrap()[index]
+    }
+
     /// Searches for a `Buffer` matching the data provided by a `RendererEvent`
     pub fn find_buffer_from_event(
         &mut self,

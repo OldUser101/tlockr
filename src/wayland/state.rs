@@ -9,6 +9,7 @@
 
 use crate::buffer::BufferManager;
 use crate::event::Event;
+use crate::fallback::FallbackRenderer;
 use crate::ffi::{get_state, set_renderer_read_fd, set_renderer_write_fd, set_state};
 use crate::shared::State;
 use crate::shared::{ApplicationState, Pipe};
@@ -75,6 +76,8 @@ pub struct WaylandState {
 
     pub develop: bool,
     pub fallback: bool,
+
+    pub fallback_renderer: Option<FallbackRenderer>,
 }
 
 impl WaylandState {
@@ -108,6 +111,7 @@ impl WaylandState {
             pending_pointer_event: None,
             develop,
             fallback: false,
+            fallback_renderer: None,
         }
     }
 
@@ -205,10 +209,23 @@ impl WaylandState {
 
         warn!("Renderer died! Switching into fallback mode.");
 
-        // Switch into fallback mode
-        self.fallback = true;
-
         // Kill the renderer in case it interferes
         self.destroy_renderer();
+
+        self.initialize_fallback_renderer();
+    }
+
+    /// Initialize the fallback renderer if the main renderer fails
+    pub fn initialize_fallback_renderer(&mut self) {
+        let buffer = self.buffer_manager.get_buffer(0) as *mut _;
+        let surface = self.surface.as_ref().unwrap() as *const _;
+        let viewport = self.viewport.as_ref().unwrap() as *const _;
+
+        let mut renderer = FallbackRenderer::new(surface, viewport, buffer, self.width, self.height);
+        renderer.initialize();
+
+        self.fallback_renderer = Some(renderer);
+
+        self.fallback = true;
     }
 }

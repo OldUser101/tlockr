@@ -18,6 +18,7 @@ pub mod lock;
 pub mod registry;
 pub mod shared;
 pub mod wayland;
+pub mod fallback;
 
 use cli::start;
 
