@@ -8,13 +8,16 @@
 */
 
 use crate::buffer::BufferManager;
-use crate::event::Event;
+use crate::event::{Event, EventType};
 use crate::ffi::{
     cleanup_renderer, get_qml_path, get_renderer, initialize_renderer, set_callbacks, set_renderer,
+    set_state,
 };
+use crate::shared::State;
 use crate::wayland::WaylandState;
 
 use std::{ffi::c_void, i32};
+use tracing::{error, warn};
 use wayland_client::protocol::wl_surface::WlSurface;
 use wayland_protocols::wp::viewporter::client::wp_viewport::WpViewport;
 
@@ -104,7 +107,19 @@ impl WaylandState {
     /// Read and process a single renderer event from the renderer event pipe
     pub fn handle_renderer_event(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let event = self.read_renderer_event()?;
-        self.update_buffer(&event)?;
+
+        match event.event_type {
+            EventType::Renderer => {
+                self.update_buffer(&event)?;
+            }
+            EventType::RendererDead => {
+                self.handle_renderer_dead();
+            }
+            _ => warn!(
+                "Recieved unknown renderer event code '{}'",
+                event.event_type as u64
+            ),
+        }
 
         Ok(())
     }

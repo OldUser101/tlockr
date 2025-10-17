@@ -70,7 +70,7 @@ pub fn run_lock(config: &RunConfig) -> Result<(), Box<dyn std::error::Error>> {
 
     debug!("Initializing Wayland interfaces...");
 
-    let mut state = WaylandState::new(&mut app_state as *mut ApplicationState);
+    let mut state = WaylandState::new(&mut app_state as *mut ApplicationState, config.develop);
     let mut auth_state =
         AuthenticatorState::new(app_state_ptr, &AUTH_STOP_FLAG)
             .ok_or::<Box<dyn std::error::Error>>("Failed to create authenticator state".into())?;

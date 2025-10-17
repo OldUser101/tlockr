@@ -25,6 +25,8 @@ pub enum EventType {
 
     AuthSubmit = 9,
     AuthStateUpdate = 10,
+
+    RendererDead= 99,
 }
 
 impl TryFrom<u64> for EventType {
@@ -46,6 +48,8 @@ impl TryFrom<u64> for EventType {
 
             9 => Ok(EventType::AuthSubmit),
             10 => Ok(EventType::AuthStateUpdate),
+
+            99 => Ok(EventType::RendererDead),
             _ => Err("Invalid EventType tag"),
         }
     }

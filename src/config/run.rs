@@ -4,6 +4,5 @@
 /// Configuration struct for running the screen locker
 pub struct RunConfig<'a> {
     pub theme: Option<&'a String>,
-    pub config: Option<&'a String>,
     pub develop: bool,
 }

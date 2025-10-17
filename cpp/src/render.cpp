@@ -167,12 +167,14 @@ void setup_renderer_signals(QmlRenderer *renderer) {
                 QObject *rootObject = renderer->component->create();
                 if (!rootObject) {
                     error_log(FILENAME, "Failed to create QML root object");
+                    renderer->shouldStop = true;
                     return;
                 }
 
                 QQuickItem *rootItem = qobject_cast<QQuickItem *>(rootObject);
                 if (!rootItem) {
                     error_log(FILENAME, "Root object is not a QQuickItem");
+                    renderer->shouldStop = true;
                     delete rootObject;
                     return;
                 }
@@ -188,9 +190,10 @@ void setup_renderer_signals(QmlRenderer *renderer) {
                 const auto errors = renderer->component->errors();
                 for (const auto &error : errors) {
                     error_log(renderer->appState->qmlPath,
-                              format_log("\t", error.toString().toStdString())
+                              format_log(error.toString().toStdString())
                                   .c_str());
                 }
+                renderer->has_errors = true;
             }
         });
 
@@ -198,11 +201,12 @@ void setup_renderer_signals(QmlRenderer *renderer) {
         renderer->renderControl, &QQuickRenderControl::renderRequested,
         [renderer]() {
             if (!renderer->running || !renderer->fb->isValid() ||
-                renderer->shouldStop)
+                renderer->shouldStop || renderer->has_errors)
                 return;
 
             if (!renderer->context->makeCurrent(renderer->surface)) {
                 error_log(FILENAME, "Failed to make OpenGL context current");
+                renderer->has_errors = true;
                 return;
             }
 
@@ -245,12 +249,17 @@ void qml_renderer_thread(QmlRenderer *renderer) {
     set_initialize(renderer);
 
     renderer->threadRunning = true;
-    while (!renderer->shouldStop && renderer->app) {
+    while (!renderer->shouldStop && renderer->app && !renderer->has_errors) {
         renderer->app->processEvents(QEventLoop::AllEvents, 16);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     renderer->threadRunning = false;
+
+    if (renderer->has_errors) {
+        writeEvent(renderer->appState->rendererWriteFd, EventType::RendererDead, 0, 0);
+        error_log(FILENAME, "Renderer has errors. Exiting...");
+    }
 }
 
 int start_renderer(QmlRenderer *renderer) {

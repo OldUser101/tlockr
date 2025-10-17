@@ -34,14 +34,12 @@ pub fn start() {
     let result: Result<_, Box<dyn std::error::Error>> = match matches.subcommand() {
         Some(("run", args)) => {
             let theme = args.get_one::<String>("theme");
-            let config = args.get_one::<String>("config");
             let develop = args.get_flag("develop");
 
             let stored_run_config = root_config.run.unwrap_or_default();
 
             let run_config = RunConfig {
                 theme: theme.or(stored_run_config.theme.as_ref()),
-                config,
                 develop,
             };
 

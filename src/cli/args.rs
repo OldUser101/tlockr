@@ -75,13 +75,6 @@ pub fn build_cli() -> Command {
                         .required(false),
                 )
                 .arg(
-                    Arg::new("config")
-                        .help("Configuration file to use for this session")
-                        .short('c')
-                        .long("config")
-                        .value_name("FILE"),
-                )
-                .arg(
                     Arg::new("develop")
                         .help("Run the screen locker in development mode")
                         .short('d')
@@ -135,7 +128,45 @@ pub fn build_cli() -> Command {
                                 .required_unless_present("user"),
                         ),
                 )
-                .subcommand(Command::new("view").about("Display configuration file contents"))
-                .subcommand(Command::new("path").about("Display configuration file paths")),
+                .subcommand(
+                    Command::new("view")
+                        .about("Display configuration file contents")
+                        .arg(
+                            Arg::new("user")
+                                .long("user")
+                                .help("Target the user configuration")
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("system")
+                                .required_unless_present("system"),
+                        )
+                        .arg(
+                            Arg::new("system")
+                                .long("system")
+                                .help("Target the system configuration")
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("user")
+                                .required_unless_present("user"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("path")
+                        .about("Display configuration file paths")
+                        .arg(
+                            Arg::new("user")
+                                .long("user")
+                                .help("Target the user configuration")
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("system")
+                                .required_unless_present("system"),
+                        )
+                        .arg(
+                            Arg::new("system")
+                                .long("system")
+                                .help("Target the system configuration")
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("user")
+                                .required_unless_present("user"),
+                        ),
+                ),
         )
 }

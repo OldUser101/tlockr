@@ -26,6 +26,8 @@ enum class EventType : uint64_t {
 
     AuthSubmit = 9,
     AuthStateUpdate = 10,
+
+    RendererDead = 99,
 };
 
 typedef uint64_t EventParam;

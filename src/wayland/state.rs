@@ -15,6 +15,7 @@ use crate::shared::{ApplicationState, Pipe};
 
 use std::os::fd::AsRawFd;
 use std::time::Instant;
+use tracing::{error, warn};
 use wayland_client::EventQueue;
 use wayland_client::protocol::wl_pointer::WlPointer;
 use wayland_client::{
@@ -71,13 +72,16 @@ pub struct WaylandState {
 
     pub pointer_timestamp: Option<Instant>,
     pub pending_pointer_event: Option<Event>,
+
+    pub develop: bool,
+    pub fallback: bool,
 }
 
 impl WaylandState {
     /// Create a new `WaylandState`
     ///
     /// `initialize` needs to be called before the returned object is usable
-    pub fn new(app_state: *mut ApplicationState) -> Self {
+    pub fn new(app_state: *mut ApplicationState, develop: bool) -> Self {
         Self {
             connection: None,
             display: None,
@@ -102,6 +106,8 @@ impl WaylandState {
             renderer_write_pipe: None,
             pointer_timestamp: None,
             pending_pointer_event: None,
+            develop,
+            fallback: false,
         }
     }
 
@@ -186,5 +192,23 @@ impl WaylandState {
         }
 
         Ok(())
+    }
+
+    /// Handle a scenario where the renderer dies
+    pub fn handle_renderer_dead(&mut self) {
+        if self.develop {
+            // Exit immediately if in development mode
+            set_state(self.app_state, State::Unlocking);
+            error!("Renderer died! Aborting...");
+            return;
+        }
+
+        warn!("Renderer died! Switching into fallback mode.");
+
+        // Switch into fallback mode
+        self.fallback = true;
+
+        // Kill the renderer in case it interferes
+        self.destroy_renderer();
     }
 }

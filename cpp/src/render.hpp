@@ -73,6 +73,7 @@ struct QmlRenderer {
 
     const char *qmlPath;
     bool running = false;
+    bool has_errors = false;
 
     RsGetBufferCallback getBufferCallback = nullptr;
     void *userData = nullptr;
